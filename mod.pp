@@ -1,4 +1,4 @@
-mod "nginx_access_log_detections" {
+mod "apache_access_log_detections" {
   # hub metadata
   title         = "Apache Access Log Detections"
   description   = "Search your Apache access logs for high risk actions using Tailpipe."
@@ -11,6 +11,6 @@ mod "nginx_access_log_detections" {
   opengraph {
     title       = "Tailpipe Mod for Apache Access Log Detections"
     description = "Search your Apache access logs for high risk actions using Tailpipe."
-    #image       = "/images/mods/turbot/nginx-social-graphic.png"
+    #image       = "/images/mods/turbot/apache-social-graphic.png"
   }
 }
