@@ -11,6 +11,7 @@ benchmark "apache_security_detections" {
   children = [
     detection.apache_sql_injection_attempts,
     detection.apache_directory_traversal_attempts,
+    detection.apache_brute_force_auth_attempts,
     detection.apache_suspicious_user_agents,
     detection.apache_xss_attempts,
     detection.apache_sensitive_file_access,
@@ -99,6 +100,57 @@ query "apache_directory_traversal_attempts" {
         or request_uri like '%..%2F%'
         or request_uri like '%%%2e%%2e%%2f%'
         or request_uri like '%%%2E%%2E%%2F%'
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "apache_brute_force_auth_attempts" {
+  title           = "Brute Force Authentication Attempts Detected"
+  description     = "Detect potential brute force authentication attempts."
+  severity        = "high"
+  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+
+  query = query.apache_brute_force_auth_attempts
+
+  tags = merge(local.apache_security_common_tags, {
+    mitre_attack_ids = "TA0009:T1110"
+  })
+}
+
+query "apache_brute_force_auth_attempts" {
+  sql = <<-EOQ
+    select
+      remote_addr as request_ip,
+      request_uri as request_path,
+      request_method,
+      status as status_code,
+      tp_timestamp as timestamp
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Common brute force patterns
+        lower(request_uri) like '%login%'
+        or lower(request_uri) like '%auth%'
+        or lower(request_uri) like '%pass%'
+        or lower(request_uri) like '%password%'
+        or lower(request_uri) like '%user%'
+        or lower(request_uri) like '%username%'
+        or lower(request_uri) like '%credentials%'
+        or lower(request_uri) like '%attempt%'
+        or lower(request_uri) like '%failed%'
+        or lower(request_uri) like '%error%'
+      )
+      and (
+        -- Successful response increases suspicion
+        status = 200
+        -- POST to these URLs is suspicious
+        or request_method = 'POST'
+        -- PUT to these URLs is very suspicious
+        or request_method = 'PUT'
       )
     order by
       tp_timestamp desc;
