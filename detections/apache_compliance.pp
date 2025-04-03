@@ -10,9 +10,7 @@ benchmark "apache_compliance_detections" {
   type        = "detection"
   children = [
     detection.apache_pii_data_exposure,
-    detection.apache_restricted_resource_access,
-    detection.apache_unauthorized_ip_access,
-    detection.apache_data_privacy_requirements
+    detection.apache_restricted_resource_access
   ]
 
   tags = merge(local.apache_compliance_common_tags, {
@@ -29,7 +27,7 @@ detection "apache_pii_data_exposure" {
   query = query.apache_pii_data_exposure
 
   tags = merge(local.apache_compliance_common_tags, {
-    type = "Privacy"
+    mitre_attack_id = "TA0006:T1552.001" # Credential Access:Credentials In Files
   })
 }
 
@@ -78,7 +76,7 @@ detection "apache_restricted_resource_access" {
   query = query.apache_restricted_resource_access
 
   tags = merge(local.apache_compliance_common_tags, {
-    type = "Access"
+    mitre_attack_id = "TA0001:T1190,TA0008:T1133" # Initial Access:Exploit Public-Facing Application, Lateral Movement:External Remote Services
   })
 }
 
@@ -113,94 +111,5 @@ query "apache_restricted_resource_access" {
       and status != 404  -- Exclude 404s to reduce noise
     order by
       timestamp desc;
-  EOQ
-}
-
-detection "apache_unauthorized_ip_access" {
-  title           = "Unauthorized IP Range Access"
-  description     = "Detect access attempts from unauthorized IP ranges or geographic locations."
-  severity        = "high"
-  display_columns = ["request_ip", "request_count", "first_access", "last_access"]
-
-  query = query.apache_unauthorized_ip_access
-
-  tags = merge(local.apache_compliance_common_tags, {
-    type = "Access"
-  })
-}
-
-query "apache_unauthorized_ip_access" {
-  sql = <<-EOQ
-    with unauthorized_access as (
-      select
-        remote_addr as request_ip,
-        count(*) as request_count,
-        min(tp_timestamp) as first_access,
-        max(tp_timestamp) as last_access
-      from
-        apache_access_log
-      where
-        remote_addr not like '10.%'
-        and remote_addr not like '172.%'
-        and remote_addr not like '192.168.%'
-        and remote_addr not like '127.%'
-      group by
-        remote_addr
-    )
-    select
-      *
-    from
-      unauthorized_access
-    order by
-      request_count desc;
-  EOQ
-}
-
-detection "apache_data_privacy_requirements" {
-  title           = "Data Privacy Requirements"
-  description     = "Monitor compliance with data privacy requirements and sensitive data handling."
-  severity        = "high"
-  display_columns = ["endpoint", "total_requests", "sensitive_data_count", "unique_ips"]
-
-  query = query.apache_data_privacy_requirements
-
-  tags = merge(local.apache_compliance_common_tags, {
-    type = "Privacy"
-  })
-}
-
-query "apache_data_privacy_requirements" {
-  sql = <<-EOQ
-    with privacy_endpoints as (
-      select
-        request_uri as endpoint,
-        count(*) as total_requests,
-        count(*) filter (
-          where request_uri ~ '(?i)(ssn|email|password|credit|card|phone|address|dob|birth)'
-        ) as sensitive_data_count,
-        count(distinct remote_addr) as unique_ips
-      from
-        apache_access_log
-      where
-        request_uri is not null
-        -- Focus on API endpoints and form submissions
-        and (request_uri like '/api/%' or request_method = 'POST')
-      group by
-        request_uri
-      having
-        count(*) filter (
-          where request_uri ~ '(?i)(ssn|email|password|credit|card|phone|address|dob|birth)'
-        ) > 0
-    )
-    select
-      endpoint,
-      total_requests,
-      sensitive_data_count,
-      unique_ips,
-      round((sensitive_data_count::float / total_requests * 100)::numeric, 2) as sensitive_data_percentage
-    from
-      privacy_endpoints
-    order by
-      sensitive_data_count desc;
   EOQ
 } 

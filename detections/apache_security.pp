@@ -11,13 +11,11 @@ benchmark "apache_security_detections" {
   children = [
     detection.apache_sql_injection_attempts,
     detection.apache_directory_traversal_attempts,
-    detection.apache_brute_force_auth_attempts,
     detection.apache_suspicious_user_agents,
     detection.apache_xss_attempts,
     detection.apache_sensitive_file_access,
     detection.apache_unusual_http_methods,
     detection.apache_web_shell_detection,
-    # detection.apache_log4j_exploitation_attempts,
     detection.apache_api_key_exposure
   ]
 
@@ -104,48 +102,6 @@ query "apache_directory_traversal_attempts" {
       )
     order by
       tp_timestamp desc;
-  EOQ
-}
-
-detection "apache_brute_force_auth_attempts" {
-  title           = "Authentication Brute Force Attempts"
-  description     = "Detect potential brute force authentication attempts based on high frequency of 401/403 errors from the same IP."
-  severity        = "high"
-  display_columns = ["request_ip", "target_path", "failed_attempts", "first_attempt", "last_attempt"]
-
-  query = query.apache_brute_force_auth_attempts
-
-  tags = merge(local.apache_security_common_tags, {
-    mitre_attack_ids = "TA0006:T1110"
-  })
-}
-
-query "apache_brute_force_auth_attempts" {
-  sql = <<-EOQ
-    with failed_auths as (
-      select
-        remote_addr as request_ip,
-        request_uri as target_path,
-        count(*) as failed_attempts,
-        min(tp_timestamp) as first_attempt,
-        max(tp_timestamp) as last_attempt
-      from
-        apache_access_log
-      where
-        status in (401, 403)
-        and request_uri is not null
-      group by
-        remote_addr, request_uri
-      having
-        count(*) >= 5
-        and (max(tp_timestamp) - min(tp_timestamp)) <= interval '5 minutes'
-    )
-    select
-      *
-    from
-      failed_auths
-    order by
-      failed_attempts desc;
   EOQ
 }
 
@@ -380,51 +336,6 @@ query "apache_web_shell_detection" {
       tp_timestamp desc;
   EOQ
 }
-
-# detection "apache_log4j_exploitation_attempts" {
-#   title           = "Log4j Exploitation Attempts"
-#   description     = "Detect potential Log4j/Log4Shell exploitation attempts in request parameters."
-#   severity        = "critical"
-#   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
-
-#   query = query.apache_log4j_exploitation_attempts
-
-#   tags = merge(local.apache_security_common_tags, {
-#     mitre_attack_ids = "TA0002:T1190"
-#   })
-# }
-
-# query "apache_log4j_exploitation_attempts" {
-#   sql = <<-EOQ
-#     select
-#       remote_addr as request_ip,
-#       request_uri as request_path,
-#       request_method,
-#       status as status_code,
-#       tp_timestamp as timestamp
-#     from
-#       apache_access_log
-#     where
-#       (
-#         request_uri is not null
-#         and (
-#           lower(request_uri) like '%${jndi : % '
-#   or lower(request_uri) like ' % $ % 7 bjndi : % '
-#   or lower(request_uri) like ' % $ { % '
-#     or lower(request_uri) like ' % $ % 7 b % '
-#   )
-# )
-# or(
-#   http_user_agent is not null
-#   and(
-#     lower(http_user_agent) like ' % $ { jndi : % '
-#       or lower(http_user_agent) like ' % $ % 7 bjndi : % '
-#     )
-#   )
-#   order by
-#   tp_timestamp desc;
-#   EOQ
-# }
 
 detection "apache_api_key_exposure" {
   title           = "API Key or Token Exposure"
