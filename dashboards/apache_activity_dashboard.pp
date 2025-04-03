@@ -1,5 +1,6 @@
 dashboard "apache_activity_dashboard" {
-  title = "Apache Log Activity Dashboard"
+  title         = "Apache Log Activity Dashboard"
+  documentation = file("./dashboards/docs/apache_activity_dashboard.md")
 
   tags = {
     type    = "Dashboard"
@@ -9,113 +10,111 @@ dashboard "apache_activity_dashboard" {
   container {
     # Analysis
     card {
-      query = query.apache_activity_dashboard_total_logs
+      query = query.activity_dashboard_total_logs
       width = 2
     }
 
     card {
-      query = query.apache_activity_dashboard_success_count
+      query = query.activity_dashboard_success_count
       width = 2
       type  = "ok"
     }
 
     card {
-      query = query.apache_activity_dashboard_bad_request_count
+      query = query.activity_dashboard_bad_request_count
       width = 2
       type  = "info"
     }
 
     card {
-      query = query.apache_activity_dashboard_error_count
+      query = query.activity_dashboard_error_count
       width = 2
       type  = "alert"
     }
   }
 
   container {
-    chart {
-      title = "Top 10 Clients (Request Count)"
-      query = query.apache_activity_dashboard_top_10_clients
-      width = 6
-      type  = "table"
-    }
-
-    chart {
-      title = "Top 10 URIs (Request Count)"
-      query = query.apache_activity_dashboard_top_10_urls
-      width = 6
-      type  = "table"
-    }
 
     chart {
       title = "Status Code Distribution"
-      query = query.apache_activity_dashboard_status_distribution
+      query = query.activity_dashboard_status_distribution
       width = 6
       type  = "pie"
     }
 
     chart {
       title = "HTTP Method Distribution"
-      query = query.apache_activity_dashboard_method_distribution
+      query = query.activity_dashboard_method_distribution
+      width = 6
+      type  = "column"
+    }
+
+    chart {
+      title = "Requests per Day"
+      query = query.activity_dashboard_requests_per_day
+      width = 6
+      type  = "line"
+    }
+
+    chart {
+      title = "User Agents Distribution"
+      query = query.activity_dashboard_user_agents_distribution
       width = 6
       type  = "pie"
     }
-  }
 
-  container {
+    chart {
+      title = "Top 10 Clients (Request Count)"
+      query = query.activity_dashboard_top_10_clients
+      width = 6
+      type  = "table"
+    }
+
+    chart {
+      title = "Top 10 URIs (Request Count)"
+      query = query.activity_dashboard_top_10_urls
+      width = 6
+      type  = "table"
+    }
+
     chart {
       title = "Top 10 Slowest Endpoints"
-      query = query.apache_activity_dashboard_slowest_endpoints
+      query = query.activity_dashboard_slowest_endpoints
       width = 6
       type  = "table"
     }
 
     chart {
       title = "Top Client Error Paths"
-      query = query.apache_activity_dashboard_client_error_paths
+      query = query.activity_dashboard_client_error_paths
       width = 6
       type  = "table"
     }
   }
 
-  container {
-    chart {
-      title = "Requests per Day"
-      query = query.apache_activity_dashboard_requests_per_day
-      width = 6
-      type  = "column"
-    }
-
-    # chart {
-    #   title = "Requests by Day of Week"
-    #   query = query.apache_activity_dashboard_requests_by_day
-    #   width = 6
-    #   type  = "bar"
-    # }
-  }
-
-  # container {
-  #   chart {
-  #     title   = "Request Volume Over Time"
-  #     query   = query.apache_activity_dashboard_request_volume
-  #     width   = 12
-  #     type    = "bar"
-  #     display = "bar"
-  #   }
-  # }
 }
 
 # Queries
-query "apache_activity_dashboard_total_logs" {
+query "activity_dashboard_total_logs" {
+  title       = "Log Count"
+  description = "Count the total Apache log entries."
+
   sql = <<-EOQ
     select
       count(*) as "Total Requests"
     from 
       apache_access_log;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_success_count" {
+query "activity_dashboard_success_count" {
+  title       = "Successful Request Count"
+  description = "Count of successful HTTP requests (status 200-399)."
+
   sql = <<-EOQ
     select
       count(*) as "Successful (200-399)"
@@ -124,9 +123,16 @@ query "apache_activity_dashboard_success_count" {
     where
       status between 200 and 399;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_bad_request_count" {
+query "activity_dashboard_bad_request_count" {
+  title       = "Bad Request Count"
+  description = "Count of client error HTTP requests (status 400-499)."
+
   sql = <<-EOQ
     select
       count(*) as "Bad Requests (400-499)"
@@ -135,9 +141,16 @@ query "apache_activity_dashboard_bad_request_count" {
     where
       status between 400 and 499;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_error_count" {
+query "activity_dashboard_error_count" {
+  title       = "Server Error Count"
+  description = "Count of server error HTTP requests (status 500-599)."
+
   sql = <<-EOQ
     select
       count(*) as "Server Errors (500-599)"
@@ -146,9 +159,16 @@ query "apache_activity_dashboard_error_count" {
     where
       status between 500 and 599;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_top_10_clients" {
+query "activity_dashboard_top_10_clients" {
+  title       = "Top 10 Clients"
+  description = "List the top 10 client IPs by request count."
+
   sql = <<-EOQ
     select
       remote_addr as "Client IP",
@@ -161,9 +181,16 @@ query "apache_activity_dashboard_top_10_clients" {
       count(*) desc
     limit 10;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_top_10_urls" {
+query "activity_dashboard_top_10_urls" {
+  title       = "Top 10 URIs"
+  description = "List the top 10 requested URIs by request count."
+
   sql = <<-EOQ
     select
       request_uri as "URL",
@@ -178,9 +205,16 @@ query "apache_activity_dashboard_top_10_urls" {
       count(*) desc
     limit 10;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_requests_per_day" {
+query "activity_dashboard_requests_per_day" {
+  title       = "Requests per Day"
+  description = "Count of requests grouped by day."
+
   sql = <<-EOQ
     select
       strftime(tp_timestamp, '%Y-%m-%d') as "Date",
@@ -192,45 +226,16 @@ query "apache_activity_dashboard_requests_per_day" {
     order by
       strftime(tp_timestamp, '%Y-%m-%d');
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_requests_by_day" {
-  sql = <<-EOQ
-    select
-      case extract(dow from tp_timestamp)
-        when 0 then 'Sunday'
-        when 1 then 'Monday'
-        when 2 then 'Tuesday'
-        when 3 then 'Wednesday'
-        when 4 then 'Thursday'
-        when 5 then 'Friday'
-        when 6 then 'Saturday'
-      end as "Day of Week",
-      count(*) as "Request Count"
-    from
-      apache_access_log
-    group by
-      extract(dow from tp_timestamp)
-    order by
-      extract(dow from tp_timestamp);
-  EOQ
-}
+query "activity_dashboard_status_distribution" {
+  title       = "Status Code Distribution"
+  description = "Distribution of HTTP status codes by category."
 
-query "apache_activity_dashboard_request_volume" {
-  sql = <<-EOQ
-    select
-      date_trunc('day', tp_timestamp) as "Date",
-      count(*) as "Daily Requests"
-    from
-      apache_access_log
-    group by
-      date_trunc('day', tp_timestamp)
-    order by
-      date_trunc('day', tp_timestamp) asc;
-  EOQ
-}
-
-query "apache_activity_dashboard_status_distribution" {
   sql = <<-EOQ
     select
       case
@@ -240,7 +245,7 @@ query "apache_activity_dashboard_status_distribution" {
         when status between 500 and 599 then '5xx Server Error'
         else 'Other'
       end as "Status Category",
-      count(*) as "Count"
+      count(*) as "Request Count"
     from
       apache_access_log
     where
@@ -254,13 +259,20 @@ query "apache_activity_dashboard_status_distribution" {
         else 'Other'
       end;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_method_distribution" {
+query "activity_dashboard_method_distribution" {
+  title       = "HTTP Method Distribution"
+  description = "Distribution of HTTP methods used in requests."
+
   sql = <<-EOQ
     select
       request_method as "HTTP Method",
-      count(*) as "Count"
+      count(*) as "Request Count"
     from
       apache_access_log
     where
@@ -270,9 +282,16 @@ query "apache_activity_dashboard_method_distribution" {
     order by
       count(*) desc;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_slowest_endpoints" {
+query "activity_dashboard_slowest_endpoints" {
+  title       = "Top 10 Slowest Endpoints"
+  description = "List of the 10 slowest endpoints by average response time."
+
   sql = <<-EOQ
     select
       request_uri as "Endpoint",
@@ -294,9 +313,16 @@ query "apache_activity_dashboard_slowest_endpoints" {
       avg(request_time) desc
     limit 10;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 }
 
-query "apache_activity_dashboard_client_error_paths" {
+query "activity_dashboard_client_error_paths" {
+  title       = "Top Client Error Paths"
+  description = "List of paths that generated the most client errors (status 400-499)."
+
   sql = <<-EOQ
     select
       request_uri as "Path",
@@ -313,4 +339,29 @@ query "apache_activity_dashboard_client_error_paths" {
       count(*) desc
     limit 10;
   EOQ
+
+  tags = {
+    folder = "Apache"
+  }
+}
+
+query "activity_dashboard_user_agents_distribution" {
+  title       = "User Agents Distribution"
+  description = "Distribution of user agents in requests."
+
+  sql = <<-EOQ
+    select
+      http_user_agent as "User Agent",
+      count(*) as "Request Count"
+    from
+      apache_access_log
+    where
+      http_user_agent is not null
+    group by
+      http_user_agent;
+  EOQ
+
+  tags = {
+    folder = "Apache"
+  }
 } 

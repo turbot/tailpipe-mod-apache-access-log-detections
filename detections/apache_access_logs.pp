@@ -13,9 +13,3 @@ benchmark "apache_access_log_detections" {
     type = "Benchmark"
   })
 }
-
-locals {
-  apache_access_log_detections_common_tags = {
-    service = "Apache"
-  }
-} 
