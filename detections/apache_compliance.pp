@@ -9,10 +9,10 @@ benchmark "apache_compliance_detections" {
   description = "This benchmark contains compliance-focused detections when scanning Apache access logs."
   type        = "detection"
   children = [
-    detection.apache_pii_data_exposure,
-    detection.apache_restricted_resource_access,
-    detection.apache_unauthorized_ip_access,
-    detection.apache_data_privacy_requirements
+    detection.apache_pii_data_exposed_in_url,
+    detection.apache_restricted_resource_accessed,
+    detection.apache_unauthorized_ip_access_detected,
+    detection.apache_data_privacy_requirement_violated
   ]
 
   tags = merge(local.apache_compliance_common_tags, {
@@ -20,20 +20,20 @@ benchmark "apache_compliance_detections" {
   })
 }
 
-detection "apache_pii_data_exposure" {
-  title           = "PII Data Exposure in URLs"
-  description     = "Detect potential exposure of Personally Identifiable Information (PII) in URLs."
+detection "apache_pii_data_exposed_in_url" {
+  title           = "Apache PII Data Exposed In URL"
+  description     = "Detect when an Apache web server logged Personally Identifiable Information (PII) in URLs to check for potential data privacy violations, regulatory non-compliance, and sensitive information disclosure."
   severity        = "critical"
   display_columns = ["request_ip", "request_path", "pii_type", "status_code", "timestamp"]
 
-  query = query.apache_pii_data_exposure
+  query = query.apache_pii_data_exposed_in_url
 
   tags = merge(local.apache_compliance_common_tags, {
     mitre_attack_id = "TA0006:T1552.001" # Credential Access:Credentials In Files
   })
 }
 
-query "apache_pii_data_exposure" {
+query "apache_pii_data_exposed_in_url" {
   sql = <<-EOQ
     with pii_patterns as (
       select 
@@ -69,20 +69,20 @@ query "apache_pii_data_exposure" {
   EOQ
 }
 
-detection "apache_restricted_resource_access" {
-  title           = "Restricted Resource Access"
-  description     = "Detect access attempts to restricted resources or administrative areas."
+detection "apache_restricted_resource_accessed" {
+  title           = "Apache Restricted Resource Accessed"
+  description     = "Detect when an Apache web server processed requests to restricted resources or administrative areas to check for unauthorized access attempts, privilege escalation, or security policy violations."
   severity        = "high"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_restricted_resource_access
+  query = query.apache_restricted_resource_accessed
 
   tags = merge(local.apache_compliance_common_tags, {
     mitre_attack_id = "TA0001:T1190,TA0008:T1133" # Initial Access:Exploit Public-Facing Application, Lateral Movement:External Remote Services
   })
 }
 
-query "apache_restricted_resource_access" {
+query "apache_restricted_resource_accessed" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -116,20 +116,20 @@ query "apache_restricted_resource_access" {
   EOQ
 }
 
-detection "apache_unauthorized_ip_access" {
-  title           = "Unauthorized IP Range Access"
-  description     = "Detect access attempts from unauthorized IP ranges or geographic locations."
+detection "apache_unauthorized_ip_access_detected" {
+  title           = "Apache Unauthorized IP Access Detected"
+  description     = "Detect when an Apache web server received requests from unauthorized IP ranges or geographic locations to check for potential security policy violations, access control bypasses, or geofencing compliance issues."
   severity        = "high"
   display_columns = ["request_ip", "request_count", "first_access", "last_access"]
 
-  query = query.apache_unauthorized_ip_access
+  query = query.apache_unauthorized_ip_access_detected
 
   tags = merge(local.apache_compliance_common_tags, {
     mitre_attack_id = "TA0008:T1133,TA0003:T1078.004" # Lateral Movement:External Remote Services, Persistence:Cloud Accounts
   })
 }
 
-query "apache_unauthorized_ip_access" {
+query "apache_unauthorized_ip_access_detected" {
   sql = <<-EOQ
     with unauthorized_access as (
       select
@@ -156,20 +156,20 @@ query "apache_unauthorized_ip_access" {
   EOQ
 }
 
-detection "apache_data_privacy_requirements" {
-  title           = "Data Privacy Requirements"
-  description     = "Monitor compliance with data privacy requirements and sensitive data handling."
+detection "apache_data_privacy_requirement_violated" {
+  title           = "Apache Data Privacy Requirement Violated"
+  description     = "Detect when an Apache web server processed requests that potentially violate data privacy requirements to check for regulatory compliance issues, sensitive data handling violations, or privacy policy infractions."
   severity        = "high"
   display_columns = ["endpoint", "total_requests", "sensitive_data_count", "unique_ips"]
 
-  query = query.apache_data_privacy_requirements
+  query = query.apache_data_privacy_requirement_violated
 
   tags = merge(local.apache_compliance_common_tags, {
     mitre_attack_id = "TA0009:T1530,TA0006:T1552.001" # Collection:Data from Cloud Storage, Credential Access:Credentials In Files
   })
 }
 
-query "apache_data_privacy_requirements" {
+query "apache_data_privacy_requirement_violated" {
   sql = <<-EOQ
     with privacy_endpoints as (
       select

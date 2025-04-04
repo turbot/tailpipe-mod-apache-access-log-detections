@@ -9,14 +9,14 @@ benchmark "apache_operational_detections" {
   description = "This benchmark contains operational detections when scanning Apache access logs."
   type        = "detection"
   children = [
-    detection.apache_status_500_errors,
-    detection.apache_missing_user_agent,
-    detection.apache_large_payload_requests,
-    detection.apache_high_error_rate,
-    detection.apache_unusual_traffic_spike,
-    detection.apache_error_rate_by_endpoint,
-    detection.apache_client_error_analysis,
-    detection.apache_server_error_analysis
+    detection.apache_internal_server_error_occurred,
+    detection.apache_missing_user_agent_detected,
+    detection.apache_large_payload_request_detected,
+    detection.apache_high_error_rate_detected,
+    detection.apache_unusual_traffic_spike_detected,
+    detection.apache_endpoint_high_error_rate_detected,
+    detection.apache_client_error_pattern_detected,
+    detection.apache_server_error_pattern_detected
   ]
 
   tags = merge(local.apache_operational_common_tags, {
@@ -24,20 +24,20 @@ benchmark "apache_operational_detections" {
   })
 }
 
-detection "apache_status_500_errors" {
-  title           = "HTTP 500 Internal Server Errors"
-  description     = "Detect individual HTTP 500 Internal Server Error responses that indicate server-side failures."
+detection "apache_internal_server_error_occurred" {
+  title           = "Apache Internal Server Error Occurred"
+  description     = "Detect when an Apache web server returned HTTP 500 Internal Server Error responses to check for server-side failures, application crashes, or misconfiguration issues."
   severity        = "high"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_status_500_errors
+  query = query.apache_internal_server_error_occurred
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0040:T1499.004" # Impact:Application or System Exploitation
   })
 }
 
-query "apache_status_500_errors" {
+query "apache_internal_server_error_occurred" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -54,20 +54,20 @@ query "apache_status_500_errors" {
   EOQ
 }
 
-detection "apache_missing_user_agent" {
-  title           = "Missing User Agent Detected"
-  description     = "Detect requests with missing user agent headers, which could indicate malicious tools or scripted attacks."
+detection "apache_missing_user_agent_detected" {
+  title           = "Apache Missing User Agent Detected"
+  description     = "Detect when an Apache web server received requests with missing user agent headers to check for potential automated tools, scripted attacks, or non-standard clients."
   severity        = "medium"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_missing_user_agent
+  query = query.apache_missing_user_agent_detected
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0043:T1592" # Reconnaissance:Gather Victim Host Information
   })
 }
 
-query "apache_missing_user_agent" {
+query "apache_missing_user_agent_detected" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -86,20 +86,20 @@ query "apache_missing_user_agent" {
   EOQ
 }
 
-detection "apache_large_payload_requests" {
-  title           = "Large Payload Requests"
-  description     = "Detect requests with unusually large body sizes that could indicate file uploads or data exfiltration."
+detection "apache_large_payload_request_detected" {
+  title           = "Apache Large Payload Request Detected"
+  description     = "Detect when an Apache web server processed requests with unusually large body sizes to check for potential file uploads, data exfiltration attempts, or resource consumption issues."
   severity        = "medium"
   display_columns = ["request_ip", "request_path", "request_method", "body_bytes", "status_code", "timestamp"]
 
-  query = query.apache_large_payload_requests
+  query = query.apache_large_payload_request_detected
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0009:T1530,TA0010:T1048" # Collection:Data from Cloud Storage Object, Exfiltration:Exfiltration Over Alternative Protocol
   })
 }
 
-query "apache_large_payload_requests" {
+query "apache_large_payload_request_detected" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -117,20 +117,20 @@ query "apache_large_payload_requests" {
   EOQ
 }
 
-detection "apache_high_error_rate" {
-  title           = "High Error Rate Detected"
-  description     = "Detect when the rate of HTTP errors exceeds a threshold within a time window."
+detection "apache_high_error_rate_detected" {
+  title           = "Apache High Error Rate Detected"
+  description     = "Detect when an Apache web server experienced a high rate of HTTP errors within a time window to check for potential service disruptions, application failures, or attack patterns."
   severity        = "high"
   display_columns = ["error_count", "total_requests", "error_rate", "window_start", "window_end"]
 
-  query = query.apache_high_error_rate
+  query = query.apache_high_error_rate_detected
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0040:T1499.002" # Impact:Service Exhaustion Flood
   })
 }
 
-query "apache_high_error_rate" {
+query "apache_high_error_rate_detected" {
   sql = <<-EOQ
     with error_windows as (
       select
@@ -162,20 +162,20 @@ query "apache_high_error_rate" {
   EOQ
 }
 
-detection "apache_unusual_traffic_spike" {
-  title           = "Unusual Traffic Spike Detected"
-  description     = "Detect unusual spikes in traffic volume compared to historical patterns."
+detection "apache_unusual_traffic_spike_detected" {
+  title           = "Apache Unusual Traffic Spike Detected"
+  description     = "Detect when an Apache web server experienced unusual spikes in traffic volume compared to historical patterns to check for potential DDoS attacks, viral content, or unexpected application behavior."
   severity        = "medium"
   display_columns = ["request_count", "avg_historical_requests", "deviation_percent", "window_start", "window_end"]
 
-  query = query.apache_unusual_traffic_spike
+  query = query.apache_unusual_traffic_spike_detected
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0040:T1498,TA0040:T1499.002" # Impact:Network Denial of Service, Impact:Service Exhaustion Flood
   })
 }
 
-query "apache_unusual_traffic_spike" {
+query "apache_unusual_traffic_spike_detected" {
   sql = <<-EOQ
     with traffic_windows as (
       select
@@ -207,20 +207,20 @@ query "apache_unusual_traffic_spike" {
   EOQ
 }
 
-detection "apache_error_rate_by_endpoint" {
-  title           = "High Error Rate by Endpoint"
-  description     = "Detect endpoints with unusually high error rates."
+detection "apache_endpoint_high_error_rate_detected" {
+  title           = "Apache Endpoint High Error Rate Detected"
+  description     = "Detect when an Apache web server processed requests to specific endpoints with unusually high error rates to check for broken functionality, misconfiguration, or targeted attacks against specific application components."
   severity        = "high"
   display_columns = ["endpoint", "error_count", "total_requests", "error_rate"]
 
-  query = query.apache_error_rate_by_endpoint
+  query = query.apache_endpoint_high_error_rate_detected
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0040:T1499.002,TA0001:T1190" # Impact:Service Exhaustion Flood, Initial Access:Exploit Public-Facing Application
   })
 }
 
-query "apache_error_rate_by_endpoint" {
+query "apache_endpoint_high_error_rate_detected" {
   sql = <<-EOQ
     select
       request_uri as endpoint,
@@ -243,20 +243,20 @@ query "apache_error_rate_by_endpoint" {
   EOQ
 }
 
-detection "apache_client_error_analysis" {
-  title           = "Client Error Analysis"
-  description     = "Analyze patterns in client-side errors (4xx) to identify potential client issues."
+detection "apache_client_error_pattern_detected" {
+  title           = "Apache Client Error Pattern Detected"
+  description     = "Detect when an Apache web server logged patterns in client-side errors (4xx) to check for potential client issues, invalid requests, or reconnaissance activities."
   severity        = "medium"
   display_columns = ["status_code", "error_count", "percentage", "top_uri", "uri_count"]
 
-  query = query.apache_client_error_analysis
+  query = query.apache_client_error_pattern_detected
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0001:T1190,TA0043:T1595" # Initial Access:Exploit Public-Facing Application, Reconnaissance:Active Scanning
   })
 }
 
-query "apache_client_error_analysis" {
+query "apache_client_error_pattern_detected" {
   sql = <<-EOQ
     with client_errors as (
       select
@@ -303,20 +303,20 @@ query "apache_client_error_analysis" {
   EOQ
 }
 
-detection "apache_server_error_analysis" {
-  title           = "Server Error Analysis"
-  description     = "Analyze patterns in server-side errors (5xx) to identify potential server issues."
+detection "apache_server_error_pattern_detected" {
+  title           = "Apache Server Error Pattern Detected"
+  description     = "Detect when an Apache web server logged patterns in server-side errors (5xx) to check for potential server issues, application failures, or infrastructure problems."
   severity        = "high"
   display_columns = ["status_code", "error_count", "percentage", "top_uri", "uri_count"]
 
-  query = query.apache_server_error_analysis
+  query = query.apache_server_error_pattern_detected
 
   tags = merge(local.apache_operational_common_tags, {
     mitre_attack_id = "TA0040:T1499.004,TA0040:T1499.003" # Impact:Application or System Exploitation, Impact:Application Exhaustion Flood
   })
 }
 
-query "apache_server_error_analysis" {
+query "apache_server_error_pattern_detected" {
   sql = <<-EOQ
     with server_errors as (
       select

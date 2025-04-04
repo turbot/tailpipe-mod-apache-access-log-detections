@@ -9,15 +9,15 @@ benchmark "apache_security_detections" {
   description = "This benchmark contains security-focused detections when scanning Apache access logs."
   type        = "detection"
   children = [
-    detection.apache_sql_injection_attempts,
-    detection.apache_directory_traversal_attempts,
-    detection.apache_brute_force_auth_attempts,
-    detection.apache_suspicious_user_agents,
-    detection.apache_xss_attempts,
-    detection.apache_sensitive_file_access,
-    detection.apache_unusual_http_methods,
-    detection.apache_web_shell_detection,
-    detection.apache_api_key_exposure
+    detection.apache_sql_injection_attempted,
+    detection.apache_directory_traversal_attempted,
+    detection.apache_brute_force_auth_attempted,
+    detection.apache_suspicious_user_agent_detected,
+    detection.apache_xss_attempted,
+    detection.apache_sensitive_file_access_attempted,
+    detection.apache_unusual_http_method_used,
+    detection.apache_web_shell_access_attempted,
+    detection.apache_api_key_exposed
   ]
 
   tags = merge(local.apache_security_common_tags, {
@@ -25,20 +25,20 @@ benchmark "apache_security_detections" {
   })
 }
 
-detection "apache_sql_injection_attempts" {
-  title           = "SQL Injection Attempts Detected"
-  description     = "Detect potential SQL injection attempts in URL parameters and request paths."
+detection "apache_sql_injection_attempted" {
+  title           = "Apache SQL Injection Attempted"
+  description     = "Detect when an Apache web server was targeted by SQL injection attempts to check for potential database compromise, data theft, or unauthorized system access."
   severity        = "critical"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_sql_injection_attempts
+  query = query.apache_sql_injection_attempted
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0009:T1190"
   })
 }
 
-query "apache_sql_injection_attempts" {
+query "apache_sql_injection_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -65,20 +65,20 @@ query "apache_sql_injection_attempts" {
   EOQ
 }
 
-detection "apache_directory_traversal_attempts" {
-  title           = "Directory Traversal Attempts Detected"
-  description     = "Detect attempts to traverse directories using ../ patterns in URLs."
+detection "apache_directory_traversal_attempted" {
+  title           = "Apache Directory Traversal Attempted"
+  description     = "Detect when an Apache web server was targeted by directory traversal attempts to check for unauthorized access to sensitive files outside the web root directory."
   severity        = "high"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_directory_traversal_attempts
+  query = query.apache_directory_traversal_attempted
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0009:T1083"
   })
 }
 
-query "apache_directory_traversal_attempts" {
+query "apache_directory_traversal_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -106,20 +106,20 @@ query "apache_directory_traversal_attempts" {
   EOQ
 }
 
-detection "apache_brute_force_auth_attempts" {
-  title           = "Brute Force Authentication Attempts Detected"
-  description     = "Detect potential brute force authentication attempts."
+detection "apache_brute_force_auth_attempted" {
+  title           = "Apache Brute Force Authentication Attempted"
+  description     = "Detect when an Apache web server was targeted by brute force authentication attempts to check for potential credential compromise and unauthorized access."
   severity        = "high"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_brute_force_auth_attempts
+  query = query.apache_brute_force_auth_attempted
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0009:T1110"
   })
 }
 
-query "apache_brute_force_auth_attempts" {
+query "apache_brute_force_auth_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -157,20 +157,20 @@ query "apache_brute_force_auth_attempts" {
   EOQ
 }
 
-detection "apache_suspicious_user_agents" {
-  title           = "Suspicious User Agents Detected"
-  description     = "Detect requests from known malicious or suspicious user agents."
+detection "apache_suspicious_user_agent_detected" {
+  title           = "Apache Suspicious User Agent Detected"
+  description     = "Detect when an Apache web server received requests with known malicious user agents to check for reconnaissance activities and potential targeted attacks."
   severity        = "medium"
   display_columns = ["request_ip", "user_agent", "request_path", "status_code", "timestamp"]
 
-  query = query.apache_suspicious_user_agents
+  query = query.apache_suspicious_user_agent_detected
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0043:T1592"
   })
 }
 
-query "apache_suspicious_user_agents" {
+query "apache_suspicious_user_agent_detected" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -200,20 +200,20 @@ query "apache_suspicious_user_agents" {
   EOQ
 }
 
-detection "apache_xss_attempts" {
-  title           = "Cross-Site Scripting (XSS) Attempts"
-  description     = "Detect potential XSS attacks in request parameters and paths."
+detection "apache_xss_attempted" {
+  title           = "Apache Cross-Site Scripting Attempted"
+  description     = "Detect when an Apache web server was targeted by cross-site scripting (XSS) attacks to check for potential client-side code injection that could lead to session hijacking or credential theft."
   severity        = "critical"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_xss_attempts
+  query = query.apache_xss_attempted
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0009:T1059.007"
   })
 }
 
-query "apache_xss_attempts" {
+query "apache_xss_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -243,20 +243,20 @@ query "apache_xss_attempts" {
   EOQ
 }
 
-detection "apache_sensitive_file_access" {
-  title           = "Sensitive File Access Attempts"
-  description     = "Detect attempts to access sensitive files or directories."
+detection "apache_sensitive_file_access_attempted" {
+  title           = "Apache Sensitive File Access Attempted"
+  description     = "Detect when an Apache web server received requests for sensitive files or directories to check for potential information disclosure, configuration leaks, or access to restricted resources."
   severity        = "high"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_sensitive_file_access
+  query = query.apache_sensitive_file_access_attempted
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0009:T1083"
   })
 }
 
-query "apache_sensitive_file_access" {
+query "apache_sensitive_file_access_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -295,20 +295,20 @@ query "apache_sensitive_file_access" {
   EOQ
 }
 
-detection "apache_unusual_http_methods" {
-  title           = "Unusual HTTP Methods Detected"
-  description     = "Detect requests using unusual or potentially dangerous HTTP methods."
+detection "apache_unusual_http_method_used" {
+  title           = "Apache Unusual HTTP Method Used"
+  description     = "Detect when an Apache web server received requests using unusual or potentially dangerous HTTP methods to check for exploitation attempts, information disclosure, or unauthorized modifications."
   severity        = "medium"
   display_columns = ["request_ip", "request_method", "request_path", "status_code", "timestamp"]
 
-  query = query.apache_unusual_http_methods
+  query = query.apache_unusual_http_method_used
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0009:T1213"
   })
 }
 
-query "apache_unusual_http_methods" {
+query "apache_unusual_http_method_used" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -334,20 +334,20 @@ query "apache_unusual_http_methods" {
   EOQ
 }
 
-detection "apache_web_shell_detection" {
-  title           = "Web Shell Upload or Access Attempts"
-  description     = "Detect potential web shell uploads or access attempts."
+detection "apache_web_shell_access_attempted" {
+  title           = "Apache Web Shell Access Attempted"
+  description     = "Detect when an Apache web server received potential web shell upload or access attempts to check for backdoor installation, persistent access, or remote code execution."
   severity        = "critical"
   display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
 
-  query = query.apache_web_shell_detection
+  query = query.apache_web_shell_access_attempted
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0003:T1505.003"
   })
 }
 
-query "apache_web_shell_detection" {
+query "apache_web_shell_access_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -389,20 +389,20 @@ query "apache_web_shell_detection" {
   EOQ
 }
 
-detection "apache_api_key_exposure" {
-  title           = "API Key or Token Exposure"
-  description     = "Detect potential exposure of API keys or tokens in URLs."
+detection "apache_api_key_exposed" {
+  title           = "Apache API Key Exposed"
+  description     = "Detect when an Apache web server logged potential API keys or tokens in URLs to check for credential exposure, which could lead to unauthorized access to external services or systems."
   severity        = "critical"
   display_columns = ["request_ip", "request_path", "token_type", "status_code", "timestamp"]
 
-  query = query.apache_api_key_exposure
+  query = query.apache_api_key_exposed
 
   tags = merge(local.apache_security_common_tags, {
     mitre_attack_ids = "TA0006:T1552"
   })
 }
 
-query "apache_api_key_exposure" {
+query "apache_api_key_exposed" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
