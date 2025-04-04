@@ -1,42 +1,42 @@
 locals {
-  apache_performance_common_tags = merge(local.apache_access_log_detections_common_tags, {
+  performance_common_tags = merge(local.apache_access_log_detections_common_tags, {
     category = "Performance"
   })
 }
 
-benchmark "apache_performance_detections" {
-  title       = "Apache Performance Detections"
-  description = "This benchmark contains performance-focused detections when scanning Apache access logs."
+benchmark "performance_detections" {
+  title       = "Performance Detections"
+  description = "This benchmark contains performance-focused detections when scanning access logs."
   type        = "detection"
   children = [
-    detection.apache_very_slow_request_detected,
-    detection.apache_large_static_file_requested,
-    detection.apache_request_timeout_occurred,
-    detection.apache_slow_response_time_detected,
-    detection.apache_response_time_anomaly_detected,
-    detection.apache_high_traffic_endpoint_detected,
-    detection.apache_connection_pool_exhaustion_risk_detected
+    detection.very_slow_request_detected,
+    detection.large_static_file_requested,
+    detection.request_timeout_occurred,
+    detection.slow_response_time_detected,
+    detection.response_time_anomaly_detected,
+    detection.high_traffic_endpoint_detected,
+    detection.connection_pool_exhaustion_risk_detected
   ]
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     type = "Benchmark"
   })
 }
 
-detection "apache_very_slow_request_detected" {
-  title           = "Apache Very Slow Request Detected"
-  description     = "Detect when an Apache web server processed HTTP requests with abnormally high response times to check for performance bottlenecks, resource contention, or potential DoS conditions."
+detection "very_slow_request_detected" {
+  title           = "Very Slow Request Detected"
+  description     = "Detect when a web server processed HTTP requests with abnormally high response times to check for performance bottlenecks, resource contention, or potential DoS conditions."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_very_slow_request_detected
+  query = query.very_slow_request_detected
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     mitre_attack_id = "TA0040:T1499.003" # Impact:Application Exhaustion Flood
   })
 }
 
-query "apache_very_slow_request_detected" {
+query "very_slow_request_detected" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -54,20 +54,20 @@ query "apache_very_slow_request_detected" {
   EOQ
 }
 
-detection "apache_large_static_file_requested" {
-  title           = "Apache Large Static File Requested"
-  description     = "Detect when an Apache web server processed requests for large static files to check for potential bandwidth consumption, server load issues, or content delivery optimization opportunities."
+detection "large_static_file_requested" {
+  title           = "Large Static File Requested"
+  description     = "Detect when a web server processed requests for large static files to check for potential bandwidth consumption, server load issues, or content delivery optimization opportunities."
   severity        = "medium"
   display_columns = local.detection_display_columns
 
-  query = query.apache_large_static_file_requested
+  query = query.large_static_file_requested
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     mitre_attack_id = "TA0040:T1499.002" # Impact:Service Exhaustion Flood
   })
 }
 
-query "apache_large_static_file_requested" {
+query "large_static_file_requested" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -109,20 +109,20 @@ query "apache_large_static_file_requested" {
   EOQ
 }
 
-detection "apache_request_timeout_occurred" {
-  title           = "Apache Request Timeout Occurred"
-  description     = "Detect when an Apache web server returned HTTP 408 Request Timeout or 504 Gateway Timeout errors to check for resource constraints, server overload, or slow upstream services."
+detection "request_timeout_occurred" {
+  title           = "Request Timeout Occurred"
+  description     = "Detect when a web server returned HTTP 408 Request Timeout or 504 Gateway Timeout errors to check for resource constraints, server overload, or slow upstream services."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_request_timeout_occurred
+  query = query.request_timeout_occurred
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     mitre_attack_id = "TA0040:T1499.004" # Impact:Application or System Exploitation
   })
 }
 
-query "apache_request_timeout_occurred" {
+query "request_timeout_occurred" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -139,20 +139,20 @@ query "apache_request_timeout_occurred" {
   EOQ
 }
 
-detection "apache_slow_response_time_detected" {
-  title           = "Apache Slow Response Time Detected"
-  description     = "Detect when an Apache web server processed requests to endpoints with consistently high response times to check for performance bottlenecks, inefficient code paths, or database query issues."
+detection "slow_response_time_detected" {
+  title           = "Slow Response Time Detected"
+  description     = "Detect when a web server processed requests to endpoints with consistently high response times to check for performance bottlenecks, inefficient code paths, or database query issues."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_slow_response_time_detected
+  query = query.slow_response_time_detected
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     mitre_attack_id = "TA0040:T1499.003,TA0040:T1496.001" # Impact:Application Exhaustion Flood, Impact:Compute Hijacking
   })
 }
 
-query "apache_slow_response_time_detected" {
+query "slow_response_time_detected" {
   sql = <<-EOQ
     with response_stats as (
       select
@@ -185,20 +185,20 @@ query "apache_slow_response_time_detected" {
   EOQ
 }
 
-detection "apache_response_time_anomaly_detected" {
-  title           = "Apache Response Time Anomaly Detected"
-  description     = "Detect when an Apache web server experienced sudden increases in response time compared to historical patterns to check for performance degradation, service disruptions, or infrastructure changes."
+detection "response_time_anomaly_detected" {
+  title           = "Response Time Anomaly Detected"
+  description     = "Detect when a web server experienced sudden increases in response time compared to historical patterns to check for performance degradation, service disruptions, or infrastructure changes."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_response_time_anomaly_detected
+  query = query.response_time_anomaly_detected
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     mitre_attack_id = "TA0040:T1499.003,TA0040:T1496.001" # Impact:Application Exhaustion Flood, Impact:Compute Hijacking
   })
 }
 
-query "apache_response_time_anomaly_detected" {
+query "response_time_anomaly_detected" {
   sql = <<-EOQ
     with time_windows as (
       select
@@ -232,20 +232,20 @@ query "apache_response_time_anomaly_detected" {
   EOQ
 }
 
-detection "apache_high_traffic_endpoint_detected" {
-  title           = "Apache High Traffic Endpoint Detected"
-  description     = "Detect when an Apache web server handled unusually high traffic volumes to specific endpoints to check for resource consumption patterns, hot spots in the application, or potential areas for optimization."
+detection "high_traffic_endpoint_detected" {
+  title           = "High Traffic Endpoint Detected"
+  description     = "Detect when a web server handled unusually high traffic volumes to specific endpoints to check for resource consumption patterns, hot spots in the application, or potential areas for optimization."
   severity        = "medium"
   display_columns = local.detection_display_columns
 
-  query = query.apache_high_traffic_endpoint_detected
+  query = query.high_traffic_endpoint_detected
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     mitre_attack_id = "TA0040:T1499.002,TA0040:T1498.001" # Impact:Service Exhaustion Flood, Impact:Direct Network Flood
   })
 }
 
-query "apache_high_traffic_endpoint_detected" {
+query "high_traffic_endpoint_detected" {
   sql = <<-EOQ
     with endpoint_traffic as (
       select
@@ -281,20 +281,20 @@ query "apache_high_traffic_endpoint_detected" {
   EOQ
 }
 
-detection "apache_connection_pool_exhaustion_risk_detected" {
-  title           = "Apache Connection Pool Exhaustion Risk Detected"
-  description     = "Detect when an Apache web server showed signs of connection pool exhaustion based on concurrent connections to check for capacity limits, resource constraints, or potential denial of service conditions."
+detection "connection_pool_exhaustion_risk_detected" {
+  title           = "Connection Pool Exhaustion Risk Detected"
+  description     = "Detect when a web server showed signs of connection pool exhaustion based on concurrent connections to check for capacity limits, resource constraints, or potential denial of service conditions."
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.apache_connection_pool_exhaustion_risk_detected
+  query = query.connection_pool_exhaustion_risk_detected
 
-  tags = merge(local.apache_performance_common_tags, {
+  tags = merge(local.performance_common_tags, {
     mitre_attack_id = "TA0040:T1499.002" # Impact:Service Exhaustion Flood
   })
 }
 
-query "apache_connection_pool_exhaustion_risk_detected" {
+query "connection_pool_exhaustion_risk_detected" {
   sql = <<-EOQ
     with connection_stats as (
       select

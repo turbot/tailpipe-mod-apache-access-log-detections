@@ -1,39 +1,39 @@
 locals {
-  apache_compliance_common_tags = merge(local.apache_access_log_detections_common_tags, {
+  compliance_common_tags = merge(local.apache_access_log_detections_common_tags, {
     category = "Compliance"
   })
 }
 
-benchmark "apache_compliance_detections" {
-  title       = "Apache Compliance Detections"
-  description = "This benchmark contains compliance-focused detections when scanning Apache access logs."
+benchmark "compliance_detections" {
+  title       = "Compliance Detections"
+  description = "This benchmark contains compliance-focused detections when scanning access logs."
   type        = "detection"
   children = [
-    detection.apache_pii_data_exposed_in_url,
-    detection.apache_restricted_resource_accessed,
-    detection.apache_unauthorized_ip_access_detected,
-    detection.apache_data_privacy_requirement_violated
+    detection.pii_data_exposed_in_url,
+    detection.restricted_resource_accessed,
+    detection.unauthorized_ip_access_detected,
+    detection.data_privacy_requirement_violated
   ]
 
-  tags = merge(local.apache_compliance_common_tags, {
+  tags = merge(local.compliance_common_tags, {
     type = "Benchmark"
   })
 }
 
-detection "apache_pii_data_exposed_in_url" {
-  title           = "Apache PII Data Exposed In URL"
-  description     = "Detect when an Apache web server logged Personally Identifiable Information (PII) in URLs to check for potential data privacy violations, regulatory non-compliance, and sensitive information disclosure."
+detection "pii_data_exposed_in_url" {
+  title           = "PII Data Exposed In URL"
+  description     = "Detect when a web server logged Personally Identifiable Information (PII) in URLs to check for potential data privacy violations, regulatory non-compliance, and sensitive information disclosure."
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.apache_pii_data_exposed_in_url
+  query = query.pii_data_exposed_in_url
 
-  tags = merge(local.apache_compliance_common_tags, {
+  tags = merge(local.compliance_common_tags, {
     mitre_attack_id = "TA0006:T1552.001" # Credential Access:Credentials In Files
   })
 }
 
-query "apache_pii_data_exposed_in_url" {
+query "pii_data_exposed_in_url" {
   sql = <<-EOQ
     with pii_patterns as (
       select 
@@ -69,20 +69,20 @@ query "apache_pii_data_exposed_in_url" {
   EOQ
 }
 
-detection "apache_restricted_resource_accessed" {
-  title           = "Apache Restricted Resource Accessed"
-  description     = "Detect when an Apache web server processed requests to restricted resources or administrative areas to check for unauthorized access attempts, privilege escalation, or security policy violations."
+detection "restricted_resource_accessed" {
+  title           = "Restricted Resource Accessed"
+  description     = "Detect when a web server processed requests to restricted resources or administrative areas to check for unauthorized access attempts, privilege escalation, or security policy violations."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_restricted_resource_accessed
+  query = query.restricted_resource_accessed
 
-  tags = merge(local.apache_compliance_common_tags, {
+  tags = merge(local.compliance_common_tags, {
     mitre_attack_id = "TA0001:T1190,TA0008:T1133" # Initial Access:Exploit Public-Facing Application, Lateral Movement:External Remote Services
   })
 }
 
-query "apache_restricted_resource_accessed" {
+query "restricted_resource_accessed" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -116,20 +116,20 @@ query "apache_restricted_resource_accessed" {
   EOQ
 }
 
-detection "apache_unauthorized_ip_access_detected" {
-  title           = "Apache Unauthorized IP Access Detected"
-  description     = "Detect when an Apache web server received requests from unauthorized IP ranges or geographic locations to check for potential security policy violations, access control bypasses, or geofencing compliance issues."
+detection "unauthorized_ip_access_detected" {
+  title           = "Unauthorized IP Access Detected"
+  description     = "Detect when a web server received requests from unauthorized IP ranges or geographic locations to check for potential security policy violations, access control bypasses, or geofencing compliance issues."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_unauthorized_ip_access_detected
+  query = query.unauthorized_ip_access_detected
 
-  tags = merge(local.apache_compliance_common_tags, {
+  tags = merge(local.compliance_common_tags, {
     mitre_attack_id = "TA0008:T1133,TA0003:T1078.004" # Lateral Movement:External Remote Services, Persistence:Cloud Accounts
   })
 }
 
-query "apache_unauthorized_ip_access_detected" {
+query "unauthorized_ip_access_detected" {
   sql = <<-EOQ
     with unauthorized_access as (
       select
@@ -156,20 +156,20 @@ query "apache_unauthorized_ip_access_detected" {
   EOQ
 }
 
-detection "apache_data_privacy_requirement_violated" {
-  title           = "Apache Data Privacy Requirement Violated"
-  description     = "Detect when an Apache web server processed requests that potentially violate data privacy requirements to check for regulatory compliance issues, sensitive data handling violations, or privacy policy infractions."
+detection "data_privacy_requirement_violated" {
+  title           = "Data Privacy Requirement Violated"
+  description     = "Detect when a web server processed requests that potentially violate data privacy requirements to check for regulatory compliance issues, sensitive data handling violations, or privacy policy infractions."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_data_privacy_requirement_violated
+  query = query.data_privacy_requirement_violated
 
-  tags = merge(local.apache_compliance_common_tags, {
+  tags = merge(local.compliance_common_tags, {
     mitre_attack_id = "TA0009:T1530,TA0006:T1552.001" # Collection:Data from Cloud Storage, Credential Access:Credentials In Files
   })
 }
 
-query "apache_data_privacy_requirement_violated" {
+query "data_privacy_requirement_violated" {
   sql = <<-EOQ
     with privacy_endpoints as (
       select

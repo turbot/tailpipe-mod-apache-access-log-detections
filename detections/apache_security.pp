@@ -1,44 +1,48 @@
 locals {
-  apache_security_common_tags = merge(local.apache_access_log_detections_common_tags, {
+  security_common_tags = merge(local.apache_access_log_detections_common_tags, {
     category = "Security"
   })
 }
 
-benchmark "apache_security_detections" {
-  title       = "Apache Security Detections"
-  description = "This benchmark contains security-focused detections when scanning Apache access logs."
+benchmark "security_detections" {
+  title       = "Security Detections"
+  description = "This benchmark contains security-focused detections when scanning access logs."
   type        = "detection"
   children = [
-    detection.apache_sql_injection_attempted,
-    detection.apache_directory_traversal_attempted,
-    detection.apache_brute_force_auth_attempted,
-    detection.apache_suspicious_user_agent_detected,
-    detection.apache_xss_attempted,
-    detection.apache_sensitive_file_access_attempted,
-    detection.apache_unusual_http_method_used,
-    detection.apache_web_shell_access_attempted,
-    detection.apache_api_key_exposed
+    detection.api_key_exposed,
+    detection.brute_force_auth_attempted,
+    detection.data_privacy_requirement_violated,
+    detection.directory_traversal_attempted,
+    detection.pii_data_exposed_in_url,
+    detection.restricted_resource_accessed,
+    detection.sensitive_file_access_attempted,
+    detection.sql_injection_attempted,
+    detection.suspicious_user_agent_detected,
+    detection.unauthorized_ip_access_detected,
+    detection.unusual_http_method_used,
+    detection.web_shell_access_attempted,
+    detection.xss_attempted
   ]
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     type = "Benchmark"
   })
 }
 
-detection "apache_sql_injection_attempted" {
-  title           = "Apache SQL Injection Attempted"
-  description     = "Detect when an Apache web server was targeted by SQL injection attempts to check for potential database compromise, data theft, or unauthorized system access."
+detection "sql_injection_attempted" {
+  title           = "SQL Injection Attempted"
+  description     = "Detect when a web server was targeted by SQL injection attempts to check for potential database compromise, data theft, or unauthorized system access."
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.apache_sql_injection_attempted
+  query = query.sql_injection_attempted
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0009:T1190"
   })
 }
 
-query "apache_sql_injection_attempted" {
+query "sql_injection_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -65,20 +69,20 @@ query "apache_sql_injection_attempted" {
   EOQ
 }
 
-detection "apache_directory_traversal_attempted" {
-  title           = "Apache Directory Traversal Attempted"
-  description     = "Detect when an Apache web server was targeted by directory traversal attempts to check for unauthorized access to sensitive files outside the web root directory."
+detection "directory_traversal_attempted" {
+  title           = "Directory Traversal Attempted"
+  description     = "Detect when a web server was targeted by directory traversal attempts to check for unauthorized access to sensitive files outside the web root directory."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_directory_traversal_attempted
+  query = query.directory_traversal_attempted
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0009:T1083"
   })
 }
 
-query "apache_directory_traversal_attempted" {
+query "directory_traversal_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -106,20 +110,20 @@ query "apache_directory_traversal_attempted" {
   EOQ
 }
 
-detection "apache_brute_force_auth_attempted" {
-  title           = "Apache Brute Force Authentication Attempted"
-  description     = "Detect when an Apache web server was targeted by brute force authentication attempts to check for potential credential compromise and unauthorized access."
+detection "brute_force_auth_attempted" {
+  title           = "Brute Force Authentication Attempted"
+  description     = "Detect when a web server was targeted by brute force authentication attempts to check for potential credential compromise and unauthorized access."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_brute_force_auth_attempted
+  query = query.brute_force_auth_attempted
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0009:T1110"
   })
 }
 
-query "apache_brute_force_auth_attempted" {
+query "brute_force_auth_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -157,20 +161,20 @@ query "apache_brute_force_auth_attempted" {
   EOQ
 }
 
-detection "apache_suspicious_user_agent_detected" {
-  title           = "Apache Suspicious User Agent Detected"
-  description     = "Detect when an Apache web server received requests with known malicious user agents to check for reconnaissance activities and potential targeted attacks."
+detection "suspicious_user_agent_detected" {
+  title           = "Suspicious User Agent Detected"
+  description     = "Detect when a web server received requests with known malicious user agents to check for reconnaissance activities and potential targeted attacks."
   severity        = "medium"
   display_columns = local.detection_display_columns
 
-  query = query.apache_suspicious_user_agent_detected
+  query = query.suspicious_user_agent_detected
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0043:T1592"
   })
 }
 
-query "apache_suspicious_user_agent_detected" {
+query "suspicious_user_agent_detected" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -200,20 +204,20 @@ query "apache_suspicious_user_agent_detected" {
   EOQ
 }
 
-detection "apache_xss_attempted" {
-  title           = "Apache Cross-Site Scripting Attempted"
-  description     = "Detect when an Apache web server was targeted by cross-site scripting (XSS) attacks to check for potential client-side code injection that could lead to session hijacking or credential theft."
+detection "xss_attempted" {
+  title           = "Cross-Site Scripting Attempted"
+  description     = "Detect when a web server was targeted by cross-site scripting (XSS) attacks to check for potential client-side code injection that could lead to session hijacking or credential theft."
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.apache_xss_attempted
+  query = query.xss_attempted
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0009:T1059.007"
   })
 }
 
-query "apache_xss_attempted" {
+query "xss_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -243,20 +247,20 @@ query "apache_xss_attempted" {
   EOQ
 }
 
-detection "apache_sensitive_file_access_attempted" {
-  title           = "Apache Sensitive File Access Attempted"
-  description     = "Detect when an Apache web server received requests for sensitive files or directories to check for potential information disclosure, configuration leaks, or access to restricted resources."
+detection "sensitive_file_access_attempted" {
+  title           = "Sensitive File Access Attempted"
+  description     = "Detect when a web server received requests for sensitive files or directories to check for potential information disclosure, configuration leaks, or access to restricted resources."
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.apache_sensitive_file_access_attempted
+  query = query.sensitive_file_access_attempted
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0009:T1083"
   })
 }
 
-query "apache_sensitive_file_access_attempted" {
+query "sensitive_file_access_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -295,20 +299,20 @@ query "apache_sensitive_file_access_attempted" {
   EOQ
 }
 
-detection "apache_unusual_http_method_used" {
-  title           = "Apache Unusual HTTP Method Used"
-  description     = "Detect when an Apache web server received requests using unusual or potentially dangerous HTTP methods to check for exploitation attempts, information disclosure, or unauthorized modifications."
+detection "unusual_http_method_used" {
+  title           = "Unusual HTTP Method Used"
+  description     = "Detect when a web server received requests using unusual or potentially dangerous HTTP methods to check for exploitation attempts, information disclosure, or unauthorized modifications."
   severity        = "medium"
   display_columns = local.detection_display_columns
 
-  query = query.apache_unusual_http_method_used
+  query = query.unusual_http_method_used
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0009:T1213"
   })
 }
 
-query "apache_unusual_http_method_used" {
+query "unusual_http_method_used" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -334,20 +338,20 @@ query "apache_unusual_http_method_used" {
   EOQ
 }
 
-detection "apache_web_shell_access_attempted" {
-  title           = "Apache Web Shell Access Attempted"
-  description     = "Detect when an Apache web server received potential web shell upload or access attempts to check for backdoor installation, persistent access, or remote code execution."
+detection "web_shell_access_attempted" {
+  title           = "Web Shell Access Attempted"
+  description     = "Detect when a web server received potential web shell upload or access attempts to check for backdoor installation, persistent access, or remote code execution."
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.apache_web_shell_access_attempted
+  query = query.web_shell_access_attempted
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0003:T1505.003"
   })
 }
 
-query "apache_web_shell_access_attempted" {
+query "web_shell_access_attempted" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
@@ -389,20 +393,20 @@ query "apache_web_shell_access_attempted" {
   EOQ
 }
 
-detection "apache_api_key_exposed" {
-  title           = "Apache API Key Exposed"
-  description     = "Detect when an Apache web server logged potential API keys or tokens in URLs to check for credential exposure, which could lead to unauthorized access to external services or systems."
+detection "api_key_exposed" {
+  title           = "API Key Exposed"
+  description     = "Detect when a web server logged potential API keys or tokens in URLs to check for credential exposure, which could lead to unauthorized access to external services or systems."
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.apache_api_key_exposed
+  query = query.api_key_exposed
 
-  tags = merge(local.apache_security_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_ids = "TA0006:T1552"
   })
 }
 
-query "apache_api_key_exposed" {
+query "api_key_exposed" {
   sql = <<-EOQ
     select
       remote_addr as request_ip,
