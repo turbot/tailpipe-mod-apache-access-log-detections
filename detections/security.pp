@@ -411,7 +411,7 @@ detection "pii_data_exposed_in_url" {
 
   query = query.pii_data_exposed_in_url
 
-  tags = merge(local.compliance_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_id = "TA0006:T1552.001" # Credential Access:Credentials In Files
   })
 }
@@ -457,7 +457,7 @@ detection "restricted_resource_accessed" {
 
   query = query.restricted_resource_accessed
 
-  tags = merge(local.compliance_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_id = "TA0001:T1190,TA0008:T1133" # Initial Access:Exploit Public-Facing Application, Lateral Movement:External Remote Services
   })
 }
@@ -500,7 +500,7 @@ detection "unauthorized_ip_access_detected" {
 
   query = query.unauthorized_ip_access_detected
 
-  tags = merge(local.compliance_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_id = "TA0008:T1133,TA0003:T1078.004" # Lateral Movement:External Remote Services, Persistence:Cloud Accounts
   })
 }
@@ -537,7 +537,7 @@ detection "data_privacy_requirement_violated" {
 
   query = query.data_privacy_requirement_violated
 
-  tags = merge(local.compliance_common_tags, {
+  tags = merge(local.security_common_tags, {
     mitre_attack_id = "TA0009:T1530,TA0006:T1552.001" # Collection:Data from Cloud Storage, Credential Access:Credentials In Files
   })
 }

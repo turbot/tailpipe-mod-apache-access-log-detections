@@ -6,7 +6,6 @@ benchmark "access_log_detections" {
     benchmark.security_detections,
     benchmark.operational_detections,
     benchmark.performance_detections,
-    benchmark.compliance_detections
   ]
 
   tags = merge(local.apache_access_log_detections_common_tags, {
