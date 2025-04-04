@@ -26,6 +26,7 @@ benchmark "performance_detections" {
 detection "very_slow_request_detected" {
   title           = "Very Slow Request Detected"
   description     = "Detect when a web server processed HTTP requests with abnormally high response times to check for performance bottlenecks, resource contention, or potential DoS conditions."
+  documentation   = file("./detections/docs/very_slow_request_detected.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -52,6 +53,7 @@ query "very_slow_request_detected" {
 detection "large_static_file_requested" {
   title           = "Large Static File Requested"
   description     = "Detect when a web server processed requests for large static files to check for potential bandwidth consumption, server load issues, or content delivery optimization opportunities."
+  documentation   = file("./detections/docs/large_static_file_requested.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -65,7 +67,6 @@ detection "large_static_file_requested" {
 query "large_static_file_requested" {
   sql = <<-EOQ
     select
-      ${local.detection_sql_columns}
       case
         when lower(request_uri) like '%.jpg' or lower(request_uri) like '%.jpeg' then 'Image (JPEG)'
         when lower(request_uri) like '%.png' then 'Image (PNG)'
@@ -78,7 +79,7 @@ query "large_static_file_requested" {
       end as file_type,
       body_bytes_sent as body_bytes,
       status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -106,6 +107,7 @@ query "large_static_file_requested" {
 detection "request_timeout_occurred" {
   title           = "Request Timeout Occurred"
   description     = "Detect when a web server returned HTTP 408 Request Timeout or 504 Gateway Timeout errors to check for resource constraints, server overload, or slow upstream services."
+  documentation   = file("./detections/docs/request_timeout_occurred.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -132,6 +134,7 @@ query "request_timeout_occurred" {
 detection "slow_response_time_detected" {
   title           = "Slow Response Time Detected"
   description     = "Detect when a web server processed requests to endpoints with consistently high response times to check for performance bottlenecks, inefficient code paths, or database query issues."
+  documentation   = file("./detections/docs/slow_response_time_detected.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -178,6 +181,7 @@ query "slow_response_time_detected" {
 detection "response_time_anomaly_detected" {
   title           = "Response Time Anomaly Detected"
   description     = "Detect when a web server experienced sudden increases in response time compared to historical patterns to check for performance degradation, service disruptions, or infrastructure changes."
+  documentation   = file("./detections/docs/response_time_anomaly_detected.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -225,6 +229,7 @@ query "response_time_anomaly_detected" {
 detection "high_traffic_endpoint_detected" {
   title           = "High Traffic Endpoint Detected"
   description     = "Detect when a web server handled unusually high traffic volumes to specific endpoints to check for resource consumption patterns, hot spots in the application, or potential areas for optimization."
+  documentation   = file("./detections/docs/high_traffic_endpoint_detected.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -274,6 +279,7 @@ query "high_traffic_endpoint_detected" {
 detection "connection_pool_exhaustion_risk_detected" {
   title           = "Connection Pool Exhaustion Risk Detected"
   description     = "Detect when a web server showed signs of connection pool exhaustion based on concurrent connections to check for capacity limits, resource constraints, or potential denial of service conditions."
+  documentation   = file("./detections/docs/connection_pool_exhaustion_risk_detected.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 

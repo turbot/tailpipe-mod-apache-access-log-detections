@@ -32,6 +32,7 @@ benchmark "security_detections" {
 detection "sql_injection_attempted" {
   title           = "SQL Injection Attempted"
   description     = "Detect when a web server was targeted by SQL injection attempts to check for potential database compromise, data theft, or unauthorized system access."
+  documentation   = file("./detections/docs/sql_injection_attempted.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
@@ -68,6 +69,7 @@ query "sql_injection_attempted" {
 detection "directory_traversal_attempted" {
   title           = "Directory Traversal Attempted"
   description     = "Detect when a web server was targeted by directory traversal attempts to check for unauthorized access to sensitive files outside the web root directory."
+  documentation   = file("./detections/docs/directory_traversal_attempted.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -105,6 +107,7 @@ query "directory_traversal_attempted" {
 detection "brute_force_auth_attempted" {
   title           = "Brute Force Authentication Attempted"
   description     = "Detect when a web server was targeted by brute force authentication attempts to check for potential credential compromise and unauthorized access."
+  documentation   = file("./detections/docs/brute_force_auth_attempted.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -152,6 +155,7 @@ query "brute_force_auth_attempted" {
 detection "suspicious_user_agent_detected" {
   title           = "Suspicious User Agent Detected"
   description     = "Detect when a web server received requests with known malicious user agents to check for reconnaissance activities and potential targeted attacks."
+  documentation   = file("./detections/docs/suspicious_user_agent_detected.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -191,6 +195,7 @@ query "suspicious_user_agent_detected" {
 detection "xss_attempted" {
   title           = "Cross-Site Scripting Attempted"
   description     = "Detect when a web server was targeted by cross-site scripting (XSS) attacks to check for potential client-side code injection that could lead to session hijacking or credential theft."
+  documentation   = file("./detections/docs/xss_attempted.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
@@ -230,6 +235,7 @@ query "xss_attempted" {
 detection "sensitive_file_access_attempted" {
   title           = "Sensitive File Access Attempted"
   description     = "Detect when a web server received requests for sensitive files or directories to check for potential information disclosure, configuration leaks, or access to restricted resources."
+  documentation   = file("./detections/docs/sensitive_file_access_attempted.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -278,6 +284,7 @@ query "sensitive_file_access_attempted" {
 detection "unusual_http_method_used" {
   title           = "Unusual HTTP Method Used"
   description     = "Detect when a web server received requests using unusual or potentially dangerous HTTP methods to check for exploitation attempts, information disclosure, or unauthorized modifications."
+  documentation   = file("./detections/docs/unusual_http_method_used.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -313,6 +320,7 @@ query "unusual_http_method_used" {
 detection "web_shell_access_attempted" {
   title           = "Web Shell Access Attempted"
   description     = "Detect when a web server received potential web shell upload or access attempts to check for backdoor installation, persistent access, or remote code execution."
+  documentation   = file("./detections/docs/web_shell_access_attempted.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
@@ -364,6 +372,7 @@ query "web_shell_access_attempted" {
 detection "api_key_exposed" {
   title           = "API Key Exposed"
   description     = "Detect when a web server logged potential API keys or tokens in URLs to check for credential exposure, which could lead to unauthorized access to external services or systems."
+  documentation   = file("./detections/docs/api_key_exposed.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
@@ -377,7 +386,6 @@ detection "api_key_exposed" {
 query "api_key_exposed" {
   sql = <<-EOQ
     select
-      ${local.detection_sql_columns}
       case
         when request_uri ~ '(?i)[a-z0-9]{32,}' then 'Potential API Key'
         when request_uri ~ '(?i)bearer\s+[a-zA-Z0-9-._~+/]+=*' then 'Bearer Token'
@@ -386,7 +394,7 @@ query "api_key_exposed" {
         when request_uri ~ '(?i)client_secret=[a-zA-Z0-9-]{20,}' then 'Client Secret'
       end as token_type,
       status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -406,6 +414,7 @@ query "api_key_exposed" {
 detection "pii_data_exposed_in_url" {
   title           = "PII Data Exposed In URL"
   description     = "Detect when a web server logged Personally Identifiable Information (PII) in URLs to check for potential data privacy violations, regulatory non-compliance, and sensitive information disclosure."
+  documentation   = file("./detections/docs/pii_data_exposed_in_url.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
@@ -419,15 +428,15 @@ detection "pii_data_exposed_in_url" {
 query "pii_data_exposed_in_url" {
   sql = <<-EOQ
     with pii_patterns as (
-      select 
-        ${local.detection_sql_columns}
+      select
         case
           when request_uri ~ '[0-9]{3}-[0-9]{2}-[0-9]{4}' then 'SSN'
           when request_uri ~ '[0-9]{16}' then 'Credit Card'
           when request_uri ~ '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' then 'Email'
           when request_uri ~ '(?:password|passwd|pwd)=[^&]+' then 'Password'
           when request_uri ~ '[0-9]{10}' then 'Phone Number'
-        end as pii_type
+        end as pii_type,
+        ${local.detection_sql_columns}
       from
         apache_access_log
       where
@@ -452,6 +461,7 @@ query "pii_data_exposed_in_url" {
 detection "restricted_resource_accessed" {
   title           = "Restricted Resource Accessed"
   description     = "Detect when a web server processed requests to restricted resources or administrative areas to check for unauthorized access attempts, privilege escalation, or security policy violations."
+  documentation   = file("./detections/docs/restricted_resource_accessed.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -495,6 +505,7 @@ query "restricted_resource_accessed" {
 detection "unauthorized_ip_access_detected" {
   title           = "Unauthorized IP Access Detected"
   description     = "Detect when a web server received requests from unauthorized IP ranges or geographic locations to check for potential security policy violations, access control bypasses, or geofencing compliance issues."
+  documentation   = file("./detections/docs/unauthorized_ip_access_detected.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -509,7 +520,10 @@ query "unauthorized_ip_access_detected" {
   sql = <<-EOQ
     with unauthorized_access as (
       select
-        ${local.detection_sql_columns}
+        remote_addr as request_ip,
+        count(*) as request_count,
+        min(tp_timestamp) as first_access,
+        max(tp_timestamp) as last_access
       from
         apache_access_log
       where
@@ -532,6 +546,7 @@ query "unauthorized_ip_access_detected" {
 detection "data_privacy_requirement_violated" {
   title           = "Data Privacy Requirement Violated"
   description     = "Detect when a web server processed requests that potentially violate data privacy requirements to check for regulatory compliance issues, sensitive data handling violations, or privacy policy infractions."
+  documentation   = file("./detections/docs/data_privacy_requirement_violated.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 

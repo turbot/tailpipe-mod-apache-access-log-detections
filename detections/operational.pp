@@ -27,6 +27,7 @@ benchmark "operational_detections" {
 detection "internal_server_error_occurred" {
   title           = "Internal Server Error Occurred"
   description     = "Detect when a web server returned HTTP 500 Internal Server Error responses to check for server-side failures, application crashes, or misconfiguration issues."
+  documentation   = file("./detections/docs/internal_server_error_occurred.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -53,6 +54,7 @@ query "internal_server_error_occurred" {
 detection "missing_user_agent_detected" {
   title           = "Missing User Agent Detected"
   description     = "Detect when a web server received requests with missing user agent headers to check for potential automated tools, scripted attacks, or non-standard clients."
+  documentation   = file("./detections/docs/missing_user_agent_detected.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -81,6 +83,7 @@ query "missing_user_agent_detected" {
 detection "large_payload_request_detected" {
   title           = "Large Payload Request Detected"
   description     = "Detect when a web server processed requests with unusually large body sizes to check for potential file uploads, data exfiltration attempts, or resource consumption issues."
+  documentation   = file("./detections/docs/large_payload_request_detected.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -107,6 +110,7 @@ query "large_payload_request_detected" {
 detection "high_error_rate_detected" {
   title           = "High Error Rate Detected"
   description     = "Detect when a web server experienced a high rate of HTTP errors within a time window to check for potential service disruptions, application failures, or attack patterns."
+  documentation   = file("./detections/docs/high_error_rate_detected.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -152,6 +156,7 @@ query "high_error_rate_detected" {
 detection "unusual_traffic_spike_detected" {
   title           = "Unusual Traffic Spike Detected"
   description     = "Detect when a web server experienced unusual spikes in traffic volume compared to historical patterns to check for potential DDoS attacks, viral content, or unexpected application behavior."
+  documentation   = file("./detections/docs/unusual_traffic_spike_detected.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -197,6 +202,7 @@ query "unusual_traffic_spike_detected" {
 detection "endpoint_high_error_rate_detected" {
   title           = "Endpoint High Error Rate Detected"
   description     = "Detect when a web server processed requests to specific endpoints with unusually high error rates to check for broken functionality, misconfiguration, or targeted attacks against specific application components."
+  documentation   = file("./detections/docs/endpoint_high_error_rate_detected.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
@@ -233,6 +239,7 @@ query "endpoint_high_error_rate_detected" {
 detection "client_error_pattern_detected" {
   title           = "Client Error Pattern Detected"
   description     = "Detect when a web server logged patterns in client-side errors (4xx) to check for potential client issues, invalid requests, or reconnaissance activities."
+  documentation   = file("./detections/docs/client_error_pattern_detected.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
@@ -293,6 +300,7 @@ query "client_error_pattern_detected" {
 detection "server_error_pattern_detected" {
   title           = "Server Error Pattern Detected"
   description     = "Detect when a web server logged patterns in server-side errors (5xx) to check for potential server issues, application failures, or infrastructure problems."
+  documentation   = file("./detections/docs/server_error_pattern_detected.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
