@@ -39,12 +39,7 @@ detection "very_slow_request_detected" {
 query "very_slow_request_detected" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      request_time as response_time,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -70,8 +65,7 @@ detection "large_static_file_requested" {
 query "large_static_file_requested" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
+      ${local.detection_sql_columns}
       case
         when lower(request_uri) like '%.jpg' or lower(request_uri) like '%.jpeg' then 'Image (JPEG)'
         when lower(request_uri) like '%.png' then 'Image (PNG)'
@@ -125,11 +119,7 @@ detection "request_timeout_occurred" {
 query "request_timeout_occurred" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where

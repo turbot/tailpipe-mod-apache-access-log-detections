@@ -11,10 +11,12 @@ locals {
   # dimensions. Do not edit directly.
   detection_sql_columns = <<-EOQ
   tp_timestamp as timestamp,
-  request_method || ' ' || request_uri as operation,
+  request_method,
+  request_uri,
   tp_source_ip as source_ip,
-  server_name as server,
-  tp_id as detection_id,
+  status,
+  server_name,
+  tp_id as source_id,
   *
   EOQ
 }
@@ -26,8 +28,9 @@ locals {
     "timestamp",
     "request_method",
     "request_uri",
-    "tp_source_ip",
+    "source_ip",
     "status",
     "server_name",
+    "source_id",
   ]
 }

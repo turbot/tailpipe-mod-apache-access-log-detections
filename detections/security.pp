@@ -45,11 +45,7 @@ detection "sql_injection_attempted" {
 query "sql_injection_attempted" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -85,11 +81,7 @@ detection "directory_traversal_attempted" {
 query "directory_traversal_attempted" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -126,11 +118,7 @@ detection "brute_force_auth_attempted" {
 query "brute_force_auth_attempted" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -177,11 +165,7 @@ detection "suspicious_user_agent_detected" {
 query "suspicious_user_agent_detected" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      http_user_agent as user_agent,
-      request_uri as request_path,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -220,11 +204,7 @@ detection "xss_attempted" {
 query "xss_attempted" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -263,11 +243,7 @@ detection "sensitive_file_access_attempted" {
 query "sensitive_file_access_attempted" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -315,11 +291,7 @@ detection "unusual_http_method_used" {
 query "unusual_http_method_used" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_method,
-      request_uri as request_path,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -354,11 +326,7 @@ detection "web_shell_access_attempted" {
 query "web_shell_access_attempted" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -409,8 +377,7 @@ detection "api_key_exposed" {
 query "api_key_exposed" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
+      ${local.detection_sql_columns}
       case
         when request_uri ~ '(?i)[a-z0-9]{32,}' then 'Potential API Key'
         when request_uri ~ '(?i)bearer\s+[a-zA-Z0-9-._~+/]+=*' then 'Bearer Token'
@@ -453,10 +420,7 @@ query "pii_data_exposed_in_url" {
   sql = <<-EOQ
     with pii_patterns as (
       select 
-        request_uri as request_path,
-        remote_addr as request_ip,
-        status as status_code,
-        tp_timestamp as timestamp,
+        ${local.detection_sql_columns}
         case
           when request_uri ~ '[0-9]{3}-[0-9]{2}-[0-9]{4}' then 'SSN'
           when request_uri ~ '[0-9]{16}' then 'Credit Card'
@@ -501,11 +465,7 @@ detection "restricted_resource_accessed" {
 query "restricted_resource_accessed" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -549,10 +509,7 @@ query "unauthorized_ip_access_detected" {
   sql = <<-EOQ
     with unauthorized_access as (
       select
-        remote_addr as request_ip,
-        count(*) as request_count,
-        min(tp_timestamp) as first_access,
-        max(tp_timestamp) as last_access
+        ${local.detection_sql_columns}
       from
         apache_access_log
       where

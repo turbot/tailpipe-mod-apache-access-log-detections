@@ -40,11 +40,7 @@ detection "internal_server_error_occurred" {
 query "internal_server_error_occurred" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -70,11 +66,7 @@ detection "missing_user_agent_detected" {
 query "missing_user_agent_detected" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
@@ -102,12 +94,7 @@ detection "large_payload_request_detected" {
 query "large_payload_request_detected" {
   sql = <<-EOQ
     select
-      remote_addr as request_ip,
-      request_uri as request_path,
-      request_method,
-      body_bytes_sent as body_bytes,
-      status as status_code,
-      tp_timestamp as timestamp
+      ${local.detection_sql_columns}
     from
       apache_access_log
     where
