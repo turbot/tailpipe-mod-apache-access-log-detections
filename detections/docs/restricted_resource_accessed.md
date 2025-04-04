@@ -14,8 +14,6 @@ The detection identifies requests to commonly restricted paths and directories, 
 Unauthorized access to these restricted resources could allow attackers to manipulate system settings, create backdoors, escalate privileges, or gain access to sensitive data, representing a significant security risk to the organization.
 
 **References**:
-- [MITRE ATT&CK: Exploit Public-Facing Application (T1190)](https://attack.mitre.org/techniques/T1190/)
-- [MITRE ATT&CK: External Remote Services (T1133)](https://attack.mitre.org/techniques/T1133/)
 - [OWASP Broken Access Control](https://owasp.org/Top10/A01_2021-Broken_Access_Control/)
 - [CWE-284: Improper Access Control](https://cwe.mitre.org/data/definitions/284.html)
 - [Apache HTTP Server: Securing Admin Interfaces](https://httpd.apache.org/docs/2.4/howto/auth.html) 

@@ -11,7 +11,6 @@ The detection identifies requests using potentially dangerous HTTP methods, incl
 Unusual HTTP methods may indicate attempts to exploit vulnerabilities, gather information about the web server, or manipulate server resources without proper authorization.
 
 **References**:
-- [MITRE ATT&CK: Collection (T1213)](https://attack.mitre.org/techniques/T1213/)
 - [OWASP HTTP Methods](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/02-Configuration_and_Deployment_Management_Testing/06-Test_HTTP_Methods)
 - [CWE-650: Trusting HTTP Permission Methods on the Server Side](https://cwe.mitre.org/data/definitions/650.html)
 - [RFC 7231: Hypertext Transfer Protocol (HTTP/1.1): Semantics and Content](https://tools.ietf.org/html/rfc7231)

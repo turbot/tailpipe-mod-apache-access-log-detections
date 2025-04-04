@@ -20,8 +20,5 @@ Response time anomalies may indicate:
 Detecting these relative changes in performance helps identify issues before they reach critical thresholds and impact user experience.
 
 **References**:
-- [MITRE ATT&CK: Application Exhaustion Flood (T1499.003)](https://attack.mitre.org/techniques/T1499/003/)
-- [MITRE ATT&CK: Compute Hijacking (T1496.001)](https://attack.mitre.org/techniques/T1496/001/)
 - [OWASP: Application Performance Management](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/10-Business_Logic_Testing/07-Test_Defenses_Against_Application_Misuse)
 - [CWE-400: Uncontrolled Resource Consumption](https://cwe.mitre.org/data/definitions/400.html)
-- [Time Series Anomaly Detection](https://medium.com/towards-artificial-intelligence/time-series-anomaly-detection-using-lstm-encoder-decoder-models-a1c4bd8d97e1) 

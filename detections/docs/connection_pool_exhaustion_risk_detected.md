@@ -20,7 +20,6 @@ Connection pool exhaustion risks may indicate:
 Early detection of these conditions allows for proactive scaling, tuning of connection parameters, or mitigation of potential denial of service activities before complete service failure occurs.
 
 **References**:
-- [MITRE ATT&CK: Service Exhaustion Flood (T1499.002)](https://attack.mitre.org/techniques/T1499/002/)
 - [OWASP: Denial of Service](https://owasp.org/www-community/attacks/Denial_of_Service)
 - [CWE-770: Allocation of Resources Without Limits or Throttling](https://cwe.mitre.org/data/definitions/770.html)
 - [HTTP Status Code 503: Service Unavailable](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/503)

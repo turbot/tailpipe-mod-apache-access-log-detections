@@ -17,8 +17,5 @@ High error rates on specific endpoints may indicate:
 This granular approach helps identify localized issues that might be missed when looking at overall system metrics, enabling more targeted troubleshooting and security response.
 
 **References**:
-- [MITRE ATT&CK: Service Exhaustion Flood (T1499.002)](https://attack.mitre.org/techniques/T1499/002/)
-- [MITRE ATT&CK: Exploit Public-Facing Application (T1190)](https://attack.mitre.org/techniques/T1190/)
 - [OWASP API Security Top 10](https://owasp.org/API-Security/editions/2019/en/0xa9-improper-assets-management/)
 - [CWE-754: Improper Check for Unusual or Exceptional Conditions](https://cwe.mitre.org/data/definitions/754.html)
-- [Microservice Architecture and Security](https://www.nginx.com/blog/microservices-security-challenge/) 

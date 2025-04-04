@@ -19,7 +19,6 @@ Request timeout errors may indicate:
 Identifying timeout patterns helps diagnose performance bottlenecks, infrastructure issues, and potential security concerns before they escalate to complete service outages.
 
 **References**:
-- [MITRE ATT&CK: Application or System Exploitation (T1499.004)](https://attack.mitre.org/techniques/T1499/004/)
 - [HTTP Status Code 408: Request Timeout](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/408)
 - [HTTP Status Code 504: Gateway Timeout](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/504)
 - [CWE-400: Uncontrolled Resource Consumption](https://cwe.mitre.org/data/definitions/400.html)

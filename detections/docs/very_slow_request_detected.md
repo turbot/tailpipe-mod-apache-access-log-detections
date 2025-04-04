@@ -18,7 +18,6 @@ Very slow requests may indicate:
 Identifying these outlier requests helps teams address performance bottlenecks and potential availability issues before they impact larger portions of the application.
 
 **References**:
-- [MITRE ATT&CK: Application Exhaustion Flood (T1499.003)](https://attack.mitre.org/techniques/T1499/003/)
 - [OWASP: Denial of Service](https://owasp.org/www-community/attacks/Denial_of_Service)
 - [CWE-400: Uncontrolled Resource Consumption](https://cwe.mitre.org/data/definitions/400.html)
 - [Web Performance Best Practices](https://web.dev/performance-get-started/)

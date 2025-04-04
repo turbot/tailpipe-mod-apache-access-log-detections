@@ -19,8 +19,6 @@ Consistently slow response times may indicate:
 Identifying chronically slow endpoints helps prioritize performance optimization efforts and avoid gradual service degradation over time.
 
 **References**:
-- [MITRE ATT&CK: Application Exhaustion Flood (T1499.003)](https://attack.mitre.org/techniques/T1499/003/)
-- [MITRE ATT&CK: Compute Hijacking (T1496.001)](https://attack.mitre.org/techniques/T1496/001/)
 - [OWASP: Security Performance Testing](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/10-Business_Logic_Testing/07-Test_Defenses_Against_Application_Misuse)
 - [CWE-1005: Input Validation for Unexpected Parameter](https://cwe.mitre.org/data/definitions/1005.html)
 - [Web Performance Optimization](https://web.dev/fast/) 

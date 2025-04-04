@@ -19,6 +19,5 @@ Client error patterns may indicate:
 Understanding client error patterns helps identify both operational issues and potential security threats, allowing for proactive mitigation.
 
 **References**:
-
 - [OWASP: Failure to Restrict URL Access](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/05-Authorization_Testing/02-Testing_for_Bypassing_Authorization_Schema)
 - [CWE-352: Cross-Site Request Forgery](https://cwe.mitre.org/data/definitions/352.html) 

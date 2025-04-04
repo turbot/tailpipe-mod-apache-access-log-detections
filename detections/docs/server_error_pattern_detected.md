@@ -19,9 +19,6 @@ Server error patterns may indicate:
 Understanding server error patterns is critical for maintaining application availability, performance, and security.
 
 **References**:
-- [MITRE ATT&CK: Application or System Exploitation (T1499.004)](https://attack.mitre.org/techniques/T1499/004/)
-- [MITRE ATT&CK: Application Exhaustion Flood (T1499.003)](https://attack.mitre.org/techniques/T1499/003/)
 - [OWASP: Improper Error Handling](https://owasp.org/www-community/Improper_Error_Handling)
 - [HTTP Status Code Definitions: 5xx Server Error](https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html)
-- [CWE-388: Error Handling](https://cwe.mitre.org/data/definitions/388.html)
 - [Apache HTTP Server: Handling Server Errors](https://httpd.apache.org/docs/2.4/misc/security_tips.html#serversidedata) 

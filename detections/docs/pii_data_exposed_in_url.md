@@ -12,7 +12,6 @@ The detection identifies several types of PII that may be exposed in URL request
 Exposing PII in URLs violates data privacy best practices and potentially regulatory requirements such as GDPR, CCPA, and PCI-DSS. This exposure creates risk of identity theft, financial fraud, and privacy violations for users whose information is compromised.
 
 **References**:
-- [MITRE ATT&CK: Credentials In Files (T1552.001)](https://attack.mitre.org/techniques/T1552/001/)
 - [OWASP: Information Exposure Through Query Strings in URL](https://owasp.org/www-community/vulnerabilities/Information_exposure_through_query_strings_in_url)
 - [CWE-598: Use of GET Request Method With Sensitive Query Strings](https://cwe.mitre.org/data/definitions/598.html)
 - [CWE-312: Cleartext Storage of Sensitive Information](https://cwe.mitre.org/data/definitions/312.html)

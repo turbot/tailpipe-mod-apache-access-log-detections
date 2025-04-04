@@ -18,8 +18,6 @@ Unusual traffic spikes may indicate:
 Early detection of traffic anomalies allows organizations to investigate the cause and mitigate potential issues before they impact service availability or security.
 
 **References**:
-- [MITRE ATT&CK: Network Denial of Service (T1498)](https://attack.mitre.org/techniques/T1498/)
-- [MITRE ATT&CK: Service Exhaustion Flood (T1499.002)](https://attack.mitre.org/techniques/T1499/002/)
 - [OWASP: Denial of Service](https://owasp.org/www-community/attacks/Denial_of_Service)
 - [CWE-400: Uncontrolled Resource Consumption](https://cwe.mitre.org/data/definitions/400.html)
 - [Apache HTTP Server: Performance Tuning](https://httpd.apache.org/docs/2.4/misc/perf-tuning.html) 

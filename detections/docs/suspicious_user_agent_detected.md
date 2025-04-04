@@ -12,8 +12,6 @@ The detection identifies requests with user-agent strings associated with:
 Detecting these user agents early can help identify reconnaissance activities before they lead to successful exploitation.
 
 **References**:
-- [MITRE ATT&CK: Gather Victim Host Information (T1592)](https://attack.mitre.org/techniques/T1592/)
 - [OWASP Automated Threat Handbook](https://owasp.org/www-project-automated-threats-to-web-applications/)
 - [User Agent Strings - Web Application Security Testing](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/01-Information_Gathering/03-Review_Webserver_Metafiles_for_Information_Leakage)
 - [CWE-200: Exposure of Sensitive Information to an Unauthorized Actor](https://cwe.mitre.org/data/definitions/200.html)
-- [Apache Module mod_security: User Agent Filtering](https://httpd.apache.org/docs/2.4/mod/mod_security.html) 

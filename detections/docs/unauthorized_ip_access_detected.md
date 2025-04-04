@@ -10,8 +10,6 @@ The detection identifies access attempts from IP addresses outside of expected p
 This detection can help identify security policy violations, geofencing compliance issues, or potentially malicious activities originating from unexpected sources.
 
 **References**:
-- [MITRE ATT&CK: External Remote Services (T1133)](https://attack.mitre.org/techniques/T1133/)
-- [MITRE ATT&CK: Cloud Accounts (T1078.004)](https://attack.mitre.org/techniques/T1078/004/)
 - [OWASP: Authentication Cheat Sheet - IP-Based Authentication](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#ip-based-authentication)
 - [CWE-284: Improper Access Control](https://cwe.mitre.org/data/definitions/284.html)
 - [Apache HTTP Server: Access Control](https://httpd.apache.org/docs/2.4/howto/access.html) 

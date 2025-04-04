@@ -11,8 +11,6 @@ The detection identifies suspicious patterns that may indicate data privacy viol
 Violations of data privacy requirements can lead to regulatory fines, legal liability, reputational damage, and erosion of customer trust. This detection helps organizations identify and mitigate potential data privacy issues proactively.
 
 **References**:
-- [MITRE ATT&CK: Data from Cloud Storage (T1530)](https://attack.mitre.org/techniques/T1530/)
-- [MITRE ATT&CK: Credentials In Files (T1552.001)](https://attack.mitre.org/techniques/T1552/001/)
 - [OWASP API Security Top 10: Mass Assignment](https://owasp.org/API-Security/editions/2019/en/0xa6-mass-assignment/)
 - [CWE-359: Exposure of Private Personal Information to an Unauthorized Actor](https://cwe.mitre.org/data/definitions/359.html)
 - [GDPR: Data Protection by Design and Default](https://gdpr-info.eu/art-25-gdpr/)

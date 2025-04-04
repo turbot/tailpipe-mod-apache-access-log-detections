@@ -18,7 +18,6 @@ Large static file requests may indicate:
 Monitoring large static file transfers helps identify opportunities for performance optimization and detects potential resource abuse.
 
 **References**:
-- [MITRE ATT&CK: Service Exhaustion Flood (T1499.002)](https://attack.mitre.org/techniques/T1499/002/)
 - [OWASP Performance Testing Guidance](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/10-Business_Logic_Testing/07-Test_Defenses_Against_Application_Misuse)
 - [CWE-770: Allocation of Resources Without Limits or Throttling](https://cwe.mitre.org/data/definitions/770.html)
 - [Web Content Optimization Best Practices](https://developers.google.com/speed/docs/insights/OptimizeImages)

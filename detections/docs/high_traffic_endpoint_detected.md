@@ -19,8 +19,5 @@ High traffic endpoints may indicate:
 Understanding traffic distribution helps prioritize performance optimization efforts and can highlight unexpected usage patterns that warrant investigation.
 
 **References**:
-- [MITRE ATT&CK: Service Exhaustion Flood (T1499.002)](https://attack.mitre.org/techniques/T1499/002/)
-- [MITRE ATT&CK: Direct Network Flood (T1498.001)](https://attack.mitre.org/techniques/T1498/001/)
 - [OWASP: Denial of Service](https://owasp.org/www-community/attacks/Denial_of_Service)
 - [CWE-770: Allocation of Resources Without Limits or Throttling](https://cwe.mitre.org/data/definitions/770.html)
-- [Web Application Scalability Best Practices](https://aws.amazon.com/blogs/architecture/web-application-scaling-best-practices/) 

@@ -11,6 +11,5 @@ The detection identifies several types of exposed credentials in URL requests:
 Exposed credentials in URLs represent a significant security risk as they can lead to unauthorized access to third-party services, data leaks, and financial impacts through service abuse or account takeover.
 
 **References**:
-
 - [CWE-598: Use of GET Request Method With Sensitive Query Strings](https://cwe.mitre.org/data/definitions/598.html)
 - [CWE-259: Use of Hard-coded Password](https://cwe.mitre.org/data/definitions/259.html)

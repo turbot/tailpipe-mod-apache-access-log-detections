@@ -15,7 +15,6 @@ The detection identifies requests for several categories of potentially sensitiv
 Unauthorized access to these resources can lead to information disclosure, credential theft, privilege escalation, and further exploitation of the system.
 
 **References**:
-- [MITRE ATT&CK: File and Directory Discovery (T1083)](https://attack.mitre.org/techniques/T1083/)
 - [OWASP Sensitive Data Exposure](https://owasp.org/www-project-top-ten/2017/A3_2017-Sensitive_Data_Exposure)
 - [CWE-538: Insertion of Sensitive Information into Externally-Accessible File or Directory](https://cwe.mitre.org/data/definitions/538.html)
 - [Apache Security: Securing Files](https://httpd.apache.org/docs/2.4/misc/security_tips.html#protectserverfiles)
