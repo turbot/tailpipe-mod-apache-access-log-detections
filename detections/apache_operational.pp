@@ -28,7 +28,7 @@ detection "apache_internal_server_error_occurred" {
   title           = "Apache Internal Server Error Occurred"
   description     = "Detect when an Apache web server returned HTTP 500 Internal Server Error responses to check for server-side failures, application crashes, or misconfiguration issues."
   severity        = "high"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_internal_server_error_occurred
 
@@ -58,7 +58,7 @@ detection "apache_missing_user_agent_detected" {
   title           = "Apache Missing User Agent Detected"
   description     = "Detect when an Apache web server received requests with missing user agent headers to check for potential automated tools, scripted attacks, or non-standard clients."
   severity        = "medium"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_missing_user_agent_detected
 
@@ -90,7 +90,7 @@ detection "apache_large_payload_request_detected" {
   title           = "Apache Large Payload Request Detected"
   description     = "Detect when an Apache web server processed requests with unusually large body sizes to check for potential file uploads, data exfiltration attempts, or resource consumption issues."
   severity        = "medium"
-  display_columns = ["request_ip", "request_path", "request_method", "body_bytes", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_large_payload_request_detected
 
@@ -121,7 +121,7 @@ detection "apache_high_error_rate_detected" {
   title           = "Apache High Error Rate Detected"
   description     = "Detect when an Apache web server experienced a high rate of HTTP errors within a time window to check for potential service disruptions, application failures, or attack patterns."
   severity        = "high"
-  display_columns = ["error_count", "total_requests", "error_rate", "window_start", "window_end"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_high_error_rate_detected
 
@@ -166,7 +166,7 @@ detection "apache_unusual_traffic_spike_detected" {
   title           = "Apache Unusual Traffic Spike Detected"
   description     = "Detect when an Apache web server experienced unusual spikes in traffic volume compared to historical patterns to check for potential DDoS attacks, viral content, or unexpected application behavior."
   severity        = "medium"
-  display_columns = ["request_count", "avg_historical_requests", "deviation_percent", "window_start", "window_end"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_unusual_traffic_spike_detected
 
@@ -211,7 +211,7 @@ detection "apache_endpoint_high_error_rate_detected" {
   title           = "Apache Endpoint High Error Rate Detected"
   description     = "Detect when an Apache web server processed requests to specific endpoints with unusually high error rates to check for broken functionality, misconfiguration, or targeted attacks against specific application components."
   severity        = "high"
-  display_columns = ["endpoint", "error_count", "total_requests", "error_rate"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_endpoint_high_error_rate_detected
 
@@ -247,7 +247,7 @@ detection "apache_client_error_pattern_detected" {
   title           = "Apache Client Error Pattern Detected"
   description     = "Detect when an Apache web server logged patterns in client-side errors (4xx) to check for potential client issues, invalid requests, or reconnaissance activities."
   severity        = "medium"
-  display_columns = ["status_code", "error_count", "percentage", "top_uri", "uri_count"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_client_error_pattern_detected
 
@@ -307,7 +307,7 @@ detection "apache_server_error_pattern_detected" {
   title           = "Apache Server Error Pattern Detected"
   description     = "Detect when an Apache web server logged patterns in server-side errors (5xx) to check for potential server issues, application failures, or infrastructure problems."
   severity        = "high"
-  display_columns = ["status_code", "error_count", "percentage", "top_uri", "uri_count"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_server_error_pattern_detected
 

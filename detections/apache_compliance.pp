@@ -24,7 +24,7 @@ detection "apache_pii_data_exposed_in_url" {
   title           = "Apache PII Data Exposed In URL"
   description     = "Detect when an Apache web server logged Personally Identifiable Information (PII) in URLs to check for potential data privacy violations, regulatory non-compliance, and sensitive information disclosure."
   severity        = "critical"
-  display_columns = ["request_ip", "request_path", "pii_type", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_pii_data_exposed_in_url
 
@@ -73,7 +73,7 @@ detection "apache_restricted_resource_accessed" {
   title           = "Apache Restricted Resource Accessed"
   description     = "Detect when an Apache web server processed requests to restricted resources or administrative areas to check for unauthorized access attempts, privilege escalation, or security policy violations."
   severity        = "high"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_restricted_resource_accessed
 
@@ -120,7 +120,7 @@ detection "apache_unauthorized_ip_access_detected" {
   title           = "Apache Unauthorized IP Access Detected"
   description     = "Detect when an Apache web server received requests from unauthorized IP ranges or geographic locations to check for potential security policy violations, access control bypasses, or geofencing compliance issues."
   severity        = "high"
-  display_columns = ["request_ip", "request_count", "first_access", "last_access"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_unauthorized_ip_access_detected
 
@@ -160,7 +160,7 @@ detection "apache_data_privacy_requirement_violated" {
   title           = "Apache Data Privacy Requirement Violated"
   description     = "Detect when an Apache web server processed requests that potentially violate data privacy requirements to check for regulatory compliance issues, sensitive data handling violations, or privacy policy infractions."
   severity        = "high"
-  display_columns = ["endpoint", "total_requests", "sensitive_data_count", "unique_ips"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_data_privacy_requirement_violated
 

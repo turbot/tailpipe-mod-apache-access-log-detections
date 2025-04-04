@@ -1,6 +1,6 @@
-dashboard "apache_activity_dashboard" {
+dashboard "activity_dashboard" {
   title         = "Apache Log Activity Dashboard"
-  documentation = file("./dashboards/docs/apache_activity_dashboard.md")
+  documentation = file("./dashboards/docs/activity_dashboard.md")
 
   tags = {
     type    = "Dashboard"

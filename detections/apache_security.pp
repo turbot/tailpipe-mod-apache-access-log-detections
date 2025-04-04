@@ -29,7 +29,7 @@ detection "apache_sql_injection_attempted" {
   title           = "Apache SQL Injection Attempted"
   description     = "Detect when an Apache web server was targeted by SQL injection attempts to check for potential database compromise, data theft, or unauthorized system access."
   severity        = "critical"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_sql_injection_attempted
 
@@ -69,7 +69,7 @@ detection "apache_directory_traversal_attempted" {
   title           = "Apache Directory Traversal Attempted"
   description     = "Detect when an Apache web server was targeted by directory traversal attempts to check for unauthorized access to sensitive files outside the web root directory."
   severity        = "high"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_directory_traversal_attempted
 
@@ -110,7 +110,7 @@ detection "apache_brute_force_auth_attempted" {
   title           = "Apache Brute Force Authentication Attempted"
   description     = "Detect when an Apache web server was targeted by brute force authentication attempts to check for potential credential compromise and unauthorized access."
   severity        = "high"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_brute_force_auth_attempted
 
@@ -161,7 +161,7 @@ detection "apache_suspicious_user_agent_detected" {
   title           = "Apache Suspicious User Agent Detected"
   description     = "Detect when an Apache web server received requests with known malicious user agents to check for reconnaissance activities and potential targeted attacks."
   severity        = "medium"
-  display_columns = ["request_ip", "user_agent", "request_path", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_suspicious_user_agent_detected
 
@@ -204,7 +204,7 @@ detection "apache_xss_attempted" {
   title           = "Apache Cross-Site Scripting Attempted"
   description     = "Detect when an Apache web server was targeted by cross-site scripting (XSS) attacks to check for potential client-side code injection that could lead to session hijacking or credential theft."
   severity        = "critical"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_xss_attempted
 
@@ -247,7 +247,7 @@ detection "apache_sensitive_file_access_attempted" {
   title           = "Apache Sensitive File Access Attempted"
   description     = "Detect when an Apache web server received requests for sensitive files or directories to check for potential information disclosure, configuration leaks, or access to restricted resources."
   severity        = "high"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_sensitive_file_access_attempted
 
@@ -299,7 +299,7 @@ detection "apache_unusual_http_method_used" {
   title           = "Apache Unusual HTTP Method Used"
   description     = "Detect when an Apache web server received requests using unusual or potentially dangerous HTTP methods to check for exploitation attempts, information disclosure, or unauthorized modifications."
   severity        = "medium"
-  display_columns = ["request_ip", "request_method", "request_path", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_unusual_http_method_used
 
@@ -338,7 +338,7 @@ detection "apache_web_shell_access_attempted" {
   title           = "Apache Web Shell Access Attempted"
   description     = "Detect when an Apache web server received potential web shell upload or access attempts to check for backdoor installation, persistent access, or remote code execution."
   severity        = "critical"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_web_shell_access_attempted
 
@@ -393,7 +393,7 @@ detection "apache_api_key_exposed" {
   title           = "Apache API Key Exposed"
   description     = "Detect when an Apache web server logged potential API keys or tokens in URLs to check for credential exposure, which could lead to unauthorized access to external services or systems."
   severity        = "critical"
-  display_columns = ["request_ip", "request_path", "token_type", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_api_key_exposed
 

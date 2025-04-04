@@ -27,7 +27,7 @@ detection "apache_very_slow_request_detected" {
   title           = "Apache Very Slow Request Detected"
   description     = "Detect when an Apache web server processed HTTP requests with abnormally high response times to check for performance bottlenecks, resource contention, or potential DoS conditions."
   severity        = "high"
-  display_columns = ["request_ip", "request_path", "request_method", "response_time", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_very_slow_request_detected
 
@@ -58,7 +58,7 @@ detection "apache_large_static_file_requested" {
   title           = "Apache Large Static File Requested"
   description     = "Detect when an Apache web server processed requests for large static files to check for potential bandwidth consumption, server load issues, or content delivery optimization opportunities."
   severity        = "medium"
-  display_columns = ["request_ip", "request_path", "file_type", "body_bytes", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_large_static_file_requested
 
@@ -113,7 +113,7 @@ detection "apache_request_timeout_occurred" {
   title           = "Apache Request Timeout Occurred"
   description     = "Detect when an Apache web server returned HTTP 408 Request Timeout or 504 Gateway Timeout errors to check for resource constraints, server overload, or slow upstream services."
   severity        = "high"
-  display_columns = ["request_ip", "request_path", "request_method", "status_code", "timestamp"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_request_timeout_occurred
 
@@ -143,7 +143,7 @@ detection "apache_slow_response_time_detected" {
   title           = "Apache Slow Response Time Detected"
   description     = "Detect when an Apache web server processed requests to endpoints with consistently high response times to check for performance bottlenecks, inefficient code paths, or database query issues."
   severity        = "high"
-  display_columns = ["endpoint", "avg_response_time", "request_count", "max_response_time"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_slow_response_time_detected
 
@@ -189,7 +189,7 @@ detection "apache_response_time_anomaly_detected" {
   title           = "Apache Response Time Anomaly Detected"
   description     = "Detect when an Apache web server experienced sudden increases in response time compared to historical patterns to check for performance degradation, service disruptions, or infrastructure changes."
   severity        = "high"
-  display_columns = ["window_start", "window_end", "avg_response_time", "historical_avg", "deviation_percent"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_response_time_anomaly_detected
 
@@ -236,7 +236,7 @@ detection "apache_high_traffic_endpoint_detected" {
   title           = "Apache High Traffic Endpoint Detected"
   description     = "Detect when an Apache web server handled unusually high traffic volumes to specific endpoints to check for resource consumption patterns, hot spots in the application, or potential areas for optimization."
   severity        = "medium"
-  display_columns = ["endpoint", "request_count", "traffic_percent", "avg_response_time"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_high_traffic_endpoint_detected
 
@@ -285,7 +285,7 @@ detection "apache_connection_pool_exhaustion_risk_detected" {
   title           = "Apache Connection Pool Exhaustion Risk Detected"
   description     = "Detect when an Apache web server showed signs of connection pool exhaustion based on concurrent connections to check for capacity limits, resource constraints, or potential denial of service conditions."
   severity        = "critical"
-  display_columns = ["timestamp", "concurrent_connections", "rejection_rate"]
+  display_columns = local.detection_display_columns
 
   query = query.apache_connection_pool_exhaustion_risk_detected
 
