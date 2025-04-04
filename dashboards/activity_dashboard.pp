@@ -1,10 +1,10 @@
 dashboard "activity_dashboard" {
-  title         = "Apache Log Activity Dashboard"
+  title         = "Access Log Activity Dashboard"
   documentation = file("./dashboards/docs/activity_dashboard.md")
 
   tags = {
     type    = "Dashboard"
-    service = "Apache"
+    service = "Apache/AccessLog"
   }
 
   container {
@@ -36,21 +36,21 @@ dashboard "activity_dashboard" {
   container {
 
     chart {
-      title = "Status Code Distribution"
+      title = "Requests by Status Code"
       query = query.activity_dashboard_status_distribution
       width = 6
       type  = "pie"
     }
 
     chart {
-      title = "HTTP Method Distribution"
+      title = "Requests by HTTP Method"
       query = query.activity_dashboard_method_distribution
       width = 6
       type  = "column"
     }
 
     chart {
-      title = "Requests per Day"
+      title = "Requests by Day"
       query = query.activity_dashboard_requests_per_day
       width = 6
       type  = "line"
