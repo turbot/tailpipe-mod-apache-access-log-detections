@@ -13,6 +13,10 @@ benchmark "security_detections" {
     detection.brute_force_auth_attempted,
     detection.data_privacy_requirement_violated,
     detection.directory_traversal_attempted,
+    detection.ilias_lfi_attempted,
+    detection.lollms_path_traversal_attempted,
+    detection.ollama_path_traversal_attempted,
+    detection.pip_directory_traversal_attempted,
     detection.pii_data_exposed_in_url,
     detection.restricted_resource_accessed,
     detection.sensitive_file_access_attempted,
@@ -21,7 +25,14 @@ benchmark "security_detections" {
     detection.unauthorized_ip_access_detected,
     detection.unusual_http_method_used,
     detection.web_shell_access_attempted,
-    detection.xss_attempted
+    detection.xss_attempted,
+    detection.forcedentry_spyware_attempted,
+    detection.webkit_integer_overflow_attempted,
+    detection.cisco_snmp_community_exposure_attempted,
+    detection.cisco_snmp_rw_access_attempted,
+    detection.cisco_http_auth_bypass_attempted,
+    detection.cisco_ios_http_dos_attempted,
+    detection.apache_mod_status_info_disclosure_attempted
   ]
 
   tags = merge(local.security_common_tags, {
@@ -591,4 +602,886 @@ query "data_privacy_requirement_violated" {
     order by
       sensitive_data_count desc;
   EOQ
+}
+
+detection "ilias_lfi_attempted" {
+  title           = "ILIAS LFI Attempted (CVE-2022-45918)"
+  description     = "Detect attempts to exploit the ILIAS SCORM debugger local file inclusion vulnerability (CVE-2022-45918) affecting versions before 7.16, which could allow unauthorized access to sensitive files outside the intended directory."
+  documentation   = file("./detections/docs/ilias_lfi_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.ilias_lfi_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0009:T1083",
+    cve_id           = "CVE-2022-45918"
+  })
+}
+
+query "ilias_lfi_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect requests to ILIAS SCORM debugger endpoints with potential LFI
+        request_uri like '%/scorm/%'
+        and (
+          -- Look for log file parameter with path traversal
+          request_uri like '%logFile=%../%'
+          or request_uri like '%logFile=../%'
+          -- Encoded variants
+          or request_uri like '%logFile=%252e%252e%2f%'
+          or request_uri like '%logFile=%2e%2e%2f%'
+          -- Paths to common sensitive files
+          or request_uri like '%logFile=%/etc/passwd%'
+          or request_uri like '%logFile=%/etc/shadow%'
+          or request_uri like '%logFile=%/etc/hosts%'
+          or request_uri like '%logFile=%wp-config.php%'
+          or request_uri like '%logFile=%config.php%'
+          or request_uri like '%logFile=%/.env%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "lollms_path_traversal_attempted" {
+  title           = "LollMS Path Traversal Attempted (CVE-2024-4315)"
+  description     = "Detect attempts to exploit the LollMS Local File Inclusion vulnerability (CVE-2024-4315) affecting version 9.5, which could allow attackers to access or delete any file on Windows systems due to insufficient path sanitization."
+  documentation   = file("./detections/docs/lollms_path_traversal_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.lollms_path_traversal_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0009:T1083",
+    cve_id           = "CVE-2024-4315"
+  })
+}
+
+query "lollms_path_traversal_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect requests to LollMS endpoints with potential path traversal
+        (request_uri like '%/personalities%' or request_uri like '%/del_preset%')
+        and (
+          -- Look for Windows-style path traversal attempts with backslashes
+          request_uri like '%\\%'
+          or request_uri like '%\\..\\%'
+          or request_uri like '%\..\%'
+          -- Also check for URL-encoded backslashes
+          or request_uri like '%%%5C%'
+          or request_uri like '%%%5c%'
+          or request_uri like '%%%5C..%%%5C%'
+          or request_uri like '%%%5c..%%%5c%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "ollama_path_traversal_attempted" {
+  title           = "Ollama Path Traversal Attempted (CVE-2024-37032)"
+  description     = "Detect attempts to exploit the Ollama path traversal vulnerability (CVE-2024-37032) affecting versions before 0.1.34, which could allow unauthorized access to sensitive files outside the intended directory."
+  documentation   = file("./detections/docs/ollama_path_traversal_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.ollama_path_traversal_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0009:T1083",
+    cve_id           = "CVE-2024-37032"
+  })
+}
+
+query "ollama_path_traversal_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect requests to Ollama API endpoints with potential path traversal
+        (request_uri like '%/api/blobs/%' or request_uri like '%/ollama/blobs/%')
+        and (
+          -- Paths with potential traversal sequences
+          request_uri like '%/../%'
+          or request_uri like '%/..%'
+          -- Look for invalid sha256 digest format (not exactly 64 hex chars)
+          or request_uri ~ '/blobs/sha256:[^a-f0-9]'  -- Invalid characters
+          or request_uri ~ '/blobs/sha256:[a-f0-9]{0,63}$'  -- Too short
+          or request_uri ~ '/blobs/sha256:[a-f0-9]{65,}'    -- Too long
+          -- Additional check for malformed sha256 prefix
+          or request_uri ~ '/blobs/sha[^2]'
+          or request_uri ~ '/blobs/sha2[^5]'
+          or request_uri ~ '/blobs/sha25[^6]'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "pip_directory_traversal_attempted" {
+  title           = "Python pip Directory Traversal Attempted (CVE-2019-20916)"
+  description     = "Detect attempts to exploit the Python pip directory traversal vulnerability (CVE-2019-20916) affecting versions before 19.2, which could allow attackers to write files to arbitrary locations on the filesystem."
+  documentation   = file("./detections/docs/pip_directory_traversal_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.pip_directory_traversal_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0009:T1083",
+    cve_id           = "CVE-2019-20916"
+  })
+}
+
+query "pip_directory_traversal_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential Python pip package repository or installation URLs
+        (request_uri like '%/simple/%' or request_uri like '%/packages/%' or request_uri like '%/pip/%')
+        and (
+          -- Look for Content-Disposition header manipulation attempts
+          request_uri like '%../%.whl'
+          or request_uri like '%/%2e%2e/%'
+          or request_uri like '%/%2E%2E/%'
+          or request_uri like '%/.ssh/%'
+          or request_uri like '%/authorized_keys%'
+          -- Encoded variants
+          or request_uri like '%/%252e%252e/%'
+          or request_uri like '%/%252E%252E/%'
+          or request_uri like '%/%252e%252e/ssh%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "insecure_session_cookie_detected" {
+  title           = "Insecure Session Cookie Detected (CVE-2008-4122)"
+  description     = "Detect when a web server processes requests that may expose session cookies over insecure channels, particularly focusing on the Joomla! vulnerability (CVE-2008-4122) where session cookies were not set with the secure flag in HTTPS sessions."
+  documentation   = file("./detections/docs/insecure_session_cookie_detected.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.insecure_session_cookie_detected
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0006:T1539", # Credential Access:Steal Web Session Cookie
+    cve_id           = "CVE-2008-4122"
+  })
+}
+
+query "insecure_session_cookie_detected" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential Joomla session-related requests
+        (
+          request_uri like '%/administrator/%'
+          or request_uri like '%/components/%'
+          or request_uri like '%/modules/%'
+          or request_uri like '%/templates/%'
+          or request_uri like '%/includes/%'
+          or request_uri like '%/installation/%'
+          or request_uri like '%/libraries/%'
+          or request_uri like '%/plugins/%'
+        )
+        and (
+          -- Look for session-related parameters or cookies
+          request_uri like '%jsessionid=%'
+          or request_uri like '%phpsessid=%'
+          or request_uri like '%sessionid=%'
+          or request_uri like '%session_id=%'
+          -- Specific Joomla session parameters
+          or request_uri like '%JOOMLA_SESSION=%'
+          or request_uri like '%JSESSIONID=%'
+        )
+        -- Focus on potential insecure transmissions
+        and (
+          -- Non-HTTPS requests with session information
+          request_uri not like 'https://%'
+          -- Requests switching between HTTP and HTTPS
+          or request_uri like '%http://%'
+          or request_uri like '%://localhost%'
+          or request_uri like '%://127.0.0.1%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "backup_client_password_hash_exposed" {
+  title           = "Backup Client Password Hash Exposed (CVE-2008-3289)"
+  description     = "Detect when a backup client exposes password hashes in cleartext, particularly focusing on the EMC Dantz Retrospect vulnerability (CVE-2008-3289) where password hashes were transmitted without encryption."
+  documentation   = file("./detections/docs/backup_client_password_hash_exposed.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.backup_client_password_hash_exposed
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0006:T1552", # Credential Access:Unsecured Credentials
+    cve_id           = "CVE-2008-3289"
+  })
+}
+
+query "backup_client_password_hash_exposed" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential backup client communications
+        (
+          request_uri like '%/backup/%'
+          or request_uri like '%/restore/%'
+          or request_uri like '%/retrospect/%'
+          or request_uri like '%/client/%'
+          or request_uri like '%/agent/%'
+        )
+        and (
+          -- Look for potential password hash patterns
+          request_uri ~ '[a-fA-F0-9]{32,}'  -- MD5 or longer hashes
+          or request_uri ~ 'hash=[a-fA-F0-9]+'
+          or request_uri ~ 'password=[a-fA-F0-9]+'
+          or request_uri ~ 'pwd=[a-fA-F0-9]+'
+          -- Specific Retrospect client parameters
+          or request_uri like '%/auth%'
+          or request_uri like '%/login%'
+          or request_uri like '%/connect%'
+        )
+        -- Focus on unencrypted transmissions
+        and (
+          request_uri not like 'https://%'
+          or request_uri like '%http://%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "camera_config_exposure_attempted" {
+  title           = "Camera Configuration Data Exposure Attempted (CVE-2008-4390)"
+  description     = "Detect when a web server processed requests that may expose camera configuration data, particularly focusing on the Cisco Linksys WVC54GC vulnerability (CVE-2008-4390) where configuration data including passwords was transmitted in cleartext."
+  documentation   = file("./detections/docs/camera_config_exposure_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.camera_config_exposure_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0006:T1552", # Credential Access:Unsecured Credentials
+    cve_id           = "CVE-2008-4390"
+  })
+}
+
+query "camera_config_exposure_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential camera configuration access attempts
+        (
+          request_uri like '%/setup%'
+          or request_uri like '%/config%'
+          or request_uri like '%/admin%'
+          or request_uri like '%/wizard%'
+          -- Specific to Linksys WVC54GC
+          or request_uri like '%/wvc54gc%'
+          or request_uri like '%/camera%'
+        )
+        and (
+          -- Look for configuration data patterns
+          request_uri like '%setup_wizard%'
+          or request_uri like '%remote_management%'
+          or request_uri like '%settings%'
+          or request_uri like '%password%'
+          or request_uri like '%credentials%'
+          -- Specific Linksys camera parameters
+          or request_uri like '%/setup.cgi%'
+          or request_uri like '%/config.cgi%'
+        )
+        -- Focus on unencrypted transmissions
+        and (
+          request_uri not like 'https://%'
+          or request_uri like '%http://%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "network_config_exposure_attempted" {
+  title           = "Network Configuration Data Exposure Attempted (CVE-2001-1546)"
+  description     = "Detect when a web server processed requests that may expose network device configuration data, particularly focusing on the Cisco IOS vulnerability (CVE-2001-1546) where SNMP community strings could be obtained through TFTP configuration files."
+  documentation   = file("./detections/docs/network_config_exposure_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.network_config_exposure_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0006:T1552", # Credential Access:Unsecured Credentials
+    cve_id           = "CVE-2001-1546"
+  })
+}
+
+query "network_config_exposure_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential network config access attempts
+        (
+          request_uri like '%/tftp/%'
+          or request_uri like '%/config/%'
+          or request_uri like '%/cisco/%'
+          or request_uri like '%/network/%'
+          or request_uri like '%/router/%'
+          or request_uri like '%/switch/%'
+        )
+        and (
+          -- Look for configuration file patterns
+          request_uri like '%.conf%'
+          or request_uri like '%.cfg%'
+          or request_uri like '%.config%'
+          or request_uri like '%startup-config%'
+          or request_uri like '%running-config%'
+          -- SNMP related patterns
+          or request_uri like '%snmp%'
+          or request_uri like '%community%'
+          -- Network config backup patterns
+          or request_uri like '%backup%'
+          or request_uri like '%restore%'
+          -- Common config file extensions
+          or request_uri like '%.ios%'
+          or request_uri like '%.txt%'
+        )
+        -- Focus on unencrypted transmissions
+        and (
+          request_uri not like 'https://%'
+          or request_uri like '%http://%'
+          -- TFTP specific patterns
+          or request_uri like '%tftp://%'
+          or request_uri like '%udp%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "forcedentry_spyware_attempted" {
+  title           = "FORCEDENTRY Spyware Attempted (CVE-2021-30860)"
+  description     = "Detect attempts to exploit the FORCEDENTRY vulnerability (CVE-2021-30860) affecting iOS devices before 14.8, which could allow attackers to achieve remote code execution through malformed GIF files targeting CoreGraphics."
+  documentation   = file("./detections/docs/forcedentry_spyware_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.forcedentry_spyware_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0001:T1190,TA0002:T1203", # Initial Access:Exploit Public-Facing Application, Execution:Exploitation for Client Execution
+    cve_id           = "CVE-2021-30860"
+  })
+}
+
+query "forcedentry_spyware_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential FORCEDENTRY/Pegasus exploitation attempts
+        (
+          -- Look for malformed GIF file patterns
+          (
+            lower(request_uri) like '%.gif'
+            or lower(request_uri) like '%image/gif%'
+            or lower(request_uri) like '%/gif/%'
+          )
+          and (
+            -- Suspicious GIF patterns
+            request_uri ~ '(?i)gif8[^7]'  -- Invalid GIF87a/GIF89a header
+            or request_uri like '%\x00%'  -- Null bytes
+            or request_uri ~ '[^\x20-\x7E]'  -- Non-printable characters
+            or body_bytes_sent > 1048576  -- Unusually large GIF (>1MB)
+          )
+        )
+        or
+        -- CoreGraphics related patterns
+        (
+          lower(request_uri) like '%/CoreGraphics%'
+          or lower(request_uri) like '%/ImageIO%'
+          or lower(request_uri) like '%/CoreImage%'
+          -- Common iOS image processing paths
+          or lower(request_uri) like '%/Library/Graphics%'
+          or lower(request_uri) like '%/System/Library/Frameworks/ImageIO%'
+        )
+        -- Focus on potential malicious sources
+        and (
+          -- Non-standard ports
+          request_uri ~ ':\d{4,5}'
+          -- Suspicious domains/paths
+          or lower(request_uri) like '%cdn%'
+          or lower(request_uri) like '%static%'
+          or lower(request_uri) like '%media%'
+          or lower(request_uri) like '%download%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "webkit_integer_overflow_attempted" {
+  title           = "WebKit Integer Overflow Attempted (CVE-2021-30663)"
+  description     = "Detect attempts to exploit the WebKit integer overflow vulnerability (CVE-2021-30663) affecting iOS versions before 14.5.1, which could allow attackers to achieve arbitrary code execution through maliciously crafted web content."
+  documentation   = file("./detections/docs/webkit_integer_overflow_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.webkit_integer_overflow_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0002:T1203", # Execution:Exploitation for Client Execution
+    cve_id           = "CVE-2021-30663"
+  })
+}
+
+query "webkit_integer_overflow_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential WebKit exploitation attempts
+        (
+          -- Look for suspicious web content patterns
+          (
+            lower(request_uri) like '%.html'
+            or lower(request_uri) like '%.htm'
+            or lower(request_uri) like '%.js'
+            or lower(request_uri) like '%.css'
+            or lower(request_uri) like '%text/html%'
+            or lower(request_uri) like '%application/javascript%'
+            or lower(request_uri) like '%application/x-javascript%'
+          )
+          and (
+            -- Integer overflow patterns
+            request_uri ~ '[0-9]{10,}'  -- Very large numbers
+            or request_uri ~ '0x[0-9a-f]{8,}'  -- Large hex values
+            -- Memory manipulation indicators
+            or lower(request_uri) like '%heap%'
+            or lower(request_uri) like '%spray%'
+            or lower(request_uri) like '%overflow%'
+            or lower(request_uri) like '%buffer%'
+            -- Suspicious JavaScript patterns
+            or lower(request_uri) like '%arraybuffer%'
+            or lower(request_uri) like '%typedarray%'
+            or lower(request_uri) like '%dataview%'
+          )
+        )
+        or
+        -- WebKit related patterns
+        (
+          lower(request_uri) like '%webkit%'
+          or lower(request_uri) like '%safari%'
+          or lower(request_uri) like '%ios%'
+          -- Common WebKit paths
+          or lower(request_uri) like '%/WebKit%'
+          or lower(request_uri) like '%/WebCore%'
+          or lower(request_uri) like '%/JavaScriptCore%'
+        )
+        -- Focus on potential malicious sources
+        and (
+          -- Suspicious patterns
+          lower(request_uri) like '%exploit%'
+          or lower(request_uri) like '%payload%'
+          or lower(request_uri) like '%poc%'
+          or lower(request_uri) like '%0day%'
+          -- Common malicious file indicators
+          or lower(request_uri) like '%.min.js%'
+          or lower(request_uri) like '%.obf.js%'
+          or lower(request_uri) like '%.enc.js%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "cisco_snmp_community_exposure_attempted" {
+  title           = "Cisco SNMP Community String Exposure Attempted (CVE-2008-2049)"
+  description     = "Detect attempts to exploit the Cisco IOS vulnerability (CVE-2008-2049) where SNMP community strings could be obtained through TFTP configuration files due to improper access controls."
+  documentation   = file("./detections/docs/cisco_snmp_community_exposure_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.cisco_snmp_community_exposure_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0006:T1552", # Credential Access:Unsecured Credentials
+    cve_id           = "CVE-2008-2049"
+  })
+}
+
+query "cisco_snmp_community_exposure_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential Cisco IOS config access attempts
+        (
+          request_uri like '%/ios/%'
+          or request_uri like '%/cisco/%'
+          or request_uri like '%/router/%'
+          or request_uri like '%/switch/%'
+          -- TFTP specific paths
+          or request_uri like '%/tftp/%'
+          or request_uri like '%/tftpboot/%'
+        )
+        and (
+          -- Look for SNMP configuration patterns
+          request_uri like '%snmp%'
+          or request_uri like '%community%'
+          or request_uri like '%public%'
+          or request_uri like '%private%'
+          -- IOS config file patterns
+          or request_uri like '%startup-config%'
+          or request_uri like '%running-config%'
+          or request_uri like '%config.text%'
+          or request_uri like '%ios.cfg%'
+          or request_uri like '%ios.conf%'
+          -- TFTP file patterns
+          or request_uri like '%.cfg%'
+          or request_uri like '%.conf%'
+          or request_uri like '%.txt%'
+        )
+        -- Focus on unencrypted transmissions and TFTP
+        and (
+          request_uri not like 'https://%'
+          or request_uri like '%http://%'
+          or request_uri like '%tftp://%'
+          or request_uri like '%udp%'
+          -- Common TFTP ports
+          or request_uri like '%:69%'
+          or request_uri like '%:10069%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "cisco_snmp_rw_access_attempted" {
+  title           = "Cisco SNMP Read-Write Access Attempted (CVE-2007-5172)"
+  description     = "Detect attempts to exploit the Cisco IOS vulnerability (CVE-2007-5172) where improper access controls could allow unauthorized SNMP read-write access, potentially leading to device configuration changes and network compromise."
+  documentation   = file("./detections/docs/cisco_snmp_rw_access_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.cisco_snmp_rw_access_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0040:T1489", # Impact:Service Stop
+    cve_id           = "CVE-2007-5172"
+  })
+}
+
+query "cisco_snmp_rw_access_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential SNMP read-write access attempts
+        (
+          request_uri like '%/snmp/%'
+          or request_uri like '%/cisco/%'
+          or request_uri like '%/router/%'
+          or request_uri like '%/switch/%'
+          -- SNMP specific paths
+          or request_uri like '%/private/%'
+          or request_uri like '%/rw/%'
+          or request_uri like '%/write/%'
+        )
+        and (
+          -- Look for SNMP write operation patterns
+          request_uri like '%set%'
+          or request_uri like '%write%'
+          or request_uri like '%modify%'
+          or request_uri like '%config%'
+          -- SNMP version indicators
+          or request_uri like '%v2c%'
+          or request_uri like '%v3%'
+          -- Common SNMP write operations
+          or request_uri like '%reload%'
+          or request_uri like '%reset%'
+          or request_uri like '%shutdown%'
+          or request_uri like '%enable%'
+          or request_uri like '%disable%'
+        )
+        -- Focus on SNMP protocols and ports
+        and (
+          request_uri like '%snmp://%'
+          or request_uri like '%udp%'
+          -- Common SNMP ports
+          or request_uri like '%:161%'
+          or request_uri like '%:162%'
+          -- Non-standard SNMP ports
+          or request_uri like '%:1161%'
+          or request_uri like '%:1162%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "cisco_http_auth_bypass_attempted" {
+  title           = "Cisco HTTP Authentication Bypass Attempted (CVE-2003-1038)"
+  description     = "Detect attempts to exploit the Cisco IOS HTTP Server vulnerability (CVE-2003-1038) where authentication could be bypassed through crafted URLs, potentially allowing unauthorized access to the device configuration interface."
+  documentation   = file("./detections/docs/cisco_http_auth_bypass_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.cisco_http_auth_bypass_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0001:T1190", # Initial Access:Exploit Public-Facing Application
+    cve_id           = "CVE-2003-1038"
+  })
+}
+
+query "cisco_http_auth_bypass_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential Cisco IOS HTTP Server access attempts
+        (
+          request_uri like '%/ios/%'
+          or request_uri like '%/cisco/%'
+          or request_uri like '%/level/%'
+          or request_uri like '%/exec/%'
+          -- HTTP server specific paths
+          or request_uri like '%/admin/%'
+          or request_uri like '%/config/%'
+          or request_uri like '%/setup/%'
+        )
+        and (
+          -- Look for authentication bypass patterns
+          request_uri like '%/auth%'
+          or request_uri like '%/login%'
+          or request_uri like '%/bypass%'
+          -- Common HTTP auth parameters
+          or request_uri like '%username=%'
+          or request_uri like '%password=%'
+          or request_uri like '%level=%'
+          -- URL manipulation patterns
+          or request_uri like '%..%'
+          or request_uri like '%//%'
+          or request_uri like '%\\%'
+          -- Encoded variants
+          or request_uri like '%2e%2e%'
+          or request_uri like '%252e%'
+          or request_uri like '%2f%2f%'
+        )
+        -- Focus on HTTP protocol and ports
+        and (
+          request_uri like '%http://%'
+          -- Common HTTP server ports
+          or request_uri like '%:80%'
+          or request_uri like '%:8080%'
+          -- Non-standard HTTP ports
+          or request_uri like '%:180%'
+          or request_uri like '%:280%'
+          or request_uri like '%:8000%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "cisco_ios_http_dos_attempted" {
+  title           = "Cisco IOS HTTP DoS Attempted (CVE-2005-1205)"
+  description     = "Detect attempts to exploit the Cisco IOS HTTP Server vulnerability (CVE-2005-1205) where malformed HTTP requests could cause a denial of service condition through a device reload."
+  documentation   = file("./detections/docs/cisco_ios_http_dos_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.cisco_ios_http_dos_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0040:T1499", # Impact:Endpoint Denial of Service
+    cve_id           = "CVE-2005-1205"
+  })
+}
+
+query "cisco_ios_http_dos_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential Cisco IOS HTTP Server DoS attempts
+        (
+          request_uri like '%/ios/%'
+          or request_uri like '%/cisco/%'
+          or request_uri like '%/level/%'
+          or request_uri like '%/exec/%'
+          -- HTTP server specific paths
+          or request_uri like '%/admin/%'
+          or request_uri like '%/config/%'
+          or request_uri like '%/setup/%'
+        )
+        and (
+          -- Look for malformed HTTP request patterns
+          request_uri like '%\x00%'  -- Null bytes
+          or request_uri ~ '[^\x20-\x7E]'  -- Non-printable characters
+          or request_uri like '%\xff%'  -- Invalid UTF-8 sequences
+          -- Unusually long requests
+          or length(request_uri) > 2048
+          -- Invalid HTTP version strings
+          or request_uri like '%HTTP/1.%'
+          or request_uri like '%HTTP/%'
+        )
+        -- Focus on HTTP protocol and ports
+        and (
+          request_uri like '%http://%'
+          -- Common HTTP server ports
+          or request_uri like '%:80%'
+          or request_uri like '%:8080%'
+          -- Non-standard HTTP ports
+          or request_uri like '%:180%'
+          or request_uri like '%:280%'
+          or request_uri like '%:8000%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "apache_mod_status_info_disclosure_attempted" {
+  title           = "Apache mod_status Information Disclosure Attempted (CVE-2014-3852)"
+  description     = "Detect attempts to exploit the Apache mod_status vulnerability (CVE-2014-3852) where server-status pages could expose sensitive information through cross-site scripting."
+  documentation   = file("./detections/docs/apache_mod_status_info_disclosure_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.apache_mod_status_info_disclosure_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0009:T1213", # Collection:Data from Web Application
+    cve_id           = "CVE-2014-3852"
+  })
+}
+
+query "apache_mod_status_info_disclosure_attempted" {
+  sql = <<EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential mod_status information disclosure attempts
+        (
+          -- Look for server-status access attempts
+          lower(request_uri) like '%/server-status%'
+          or lower(request_uri) like '%/status%'
+          or lower(request_uri) like '%/mod_status%'
+          -- Common status page variations
+          or lower(request_uri) like '%/apache-status%'
+          or lower(request_uri) like '%/apache_status%'
+        )
+        and (
+          -- XSS patterns in query parameters
+          request_uri like '%<script%'
+          or request_uri like '%javascript:%'
+          or request_uri like '%onerror=%'
+          or request_uri like '%onload=%'
+          -- URL-encoded variants
+          or request_uri like '%3Cscript%'
+          or request_uri like '%253Cscript%'
+          or request_uri like '%26lt%3Bscript%'
+          -- Status page parameters
+          or request_uri like '%?refresh=%'
+          or request_uri like '%?auto=%'
+          or request_uri like '%?notable=%'
+        )
+      )
+    order by
+      tp_timestamp desc
+EOQ
 }
