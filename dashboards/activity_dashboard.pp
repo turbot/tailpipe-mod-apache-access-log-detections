@@ -51,7 +51,7 @@ dashboard "activity_dashboard" {
 
     chart {
       title = "Requests by Day"
-      query = query.activity_dashboard_requests_per_day
+      query = query.activity_dashboard_requests_per_daily
       width = 6
       type  = "line"
     }
@@ -211,8 +211,8 @@ query "activity_dashboard_top_10_urls" {
   }
 }
 
-query "activity_dashboard_requests_per_day" {
-  title       = "Requests per Day"
+query "activity_dashboard_requests_per_daily" {
+  title       = "Daily Requests"
   description = "Count of requests grouped by day."
 
   sql = <<-EOQ
