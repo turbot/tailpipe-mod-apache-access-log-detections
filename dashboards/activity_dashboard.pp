@@ -36,24 +36,24 @@ dashboard "activity_dashboard" {
   container {
 
     chart {
-      title = "Requests by Status Code"
-      query = query.activity_dashboard_status_distribution
+      title = "Requests by Day"
+      query = query.activity_dashboard_requests_per_daily
       width = 6
-      type  = "pie"
+      type  = "heatmap"
     }
 
     chart {
       title = "Requests by HTTP Method"
       query = query.activity_dashboard_method_distribution
       width = 6
-      type  = "column"
+      type  = "bar"
     }
 
     chart {
-      title = "Requests by Day"
-      query = query.activity_dashboard_requests_per_daily
+      title = "Requests by Status Code"
+      query = query.activity_dashboard_status_distribution
       width = 6
-      type  = "line"
+      type  = "pie"
     }
 
     chart {
@@ -280,7 +280,7 @@ query "activity_dashboard_method_distribution" {
     group by
       request_method
     order by
-      count(*) desc;
+      count(*) asc;
   EOQ
 
   tags = {
