@@ -7,5 +7,5 @@ This dashboard answers the following questions:
 - Which browsers and tools are accessing the server?
 - Which client IPs are generating the most traffic?
 - Which URIs are most frequently requested?
-- Which endpoints have the slowest response times?
-- Which paths are generating the most client errors?
+- Which paths have the most successful requests?
+- Which paths are generating the most errors?

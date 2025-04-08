@@ -21,9 +21,15 @@ dashboard "activity_dashboard" {
     }
 
     card {
-      query = query.activity_dashboard_bad_request_count
+      query = query.activity_dashboard_redirect_count
       width = 2
       type  = "info"
+    }
+
+    card {
+      query = query.activity_dashboard_bad_request_count
+      width = 2
+      type  = "alert"
     }
 
     card {
@@ -37,14 +43,14 @@ dashboard "activity_dashboard" {
 
     chart {
       title = "Requests by Day"
-      query = query.activity_dashboard_requests_per_daily
+      query = query.activity_dashboard_requests_by_day
       width = 6
       type  = "heatmap"
     }
 
     chart {
       title = "Requests by HTTP Method"
-      query = query.activity_dashboard_method_distribution
+      query = query.activity_dashboard_requests_by_http_method
       width = 6
       type  = "bar"
     }
@@ -57,36 +63,36 @@ dashboard "activity_dashboard" {
     }
 
     chart {
-      title = "User Agents Distribution"
-      query = query.activity_dashboard_user_agents_distribution
+      title = "Requests by User Agent"
+      query = query.activity_dashboard_requests_by_user_agent
       width = 6
       type  = "pie"
     }
 
     chart {
-      title = "Top 10 Clients (Request Count)"
+      title = "Top 10 Clients (Requests)"
       query = query.activity_dashboard_top_10_clients
       width = 6
       type  = "table"
     }
 
     chart {
-      title = "Top 10 URIs (Request Count)"
+      title = "Top 10 URLs (Requests)"
       query = query.activity_dashboard_top_10_urls
       width = 6
       type  = "table"
     }
 
     chart {
-      title = "Top 10 Slowest Endpoints"
-      query = query.activity_dashboard_slowest_endpoints
+      title = "Top 10 URLs (Successful Requests)"
+      query = query.activity_dashboard_requests_by_successful_requests
       width = 6
       type  = "table"
     }
 
     chart {
-      title = "Top Client Error Paths"
-      query = query.activity_dashboard_client_error_paths
+      title = "Top 10 URLs (Errors)"
+      query = query.activity_dashboard_requests_by_errors
       width = 6
       type  = "table"
     }
@@ -102,71 +108,69 @@ query "activity_dashboard_total_logs" {
   sql = <<-EOQ
     select
       count(*) as "Total Requests"
-    from 
+    from
       apache_access_log;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
 query "activity_dashboard_success_count" {
   title       = "Successful Request Count"
-  description = "Count of successful HTTP requests (status 200-399)."
+  description = "Count of successful HTTP requests (status 2xx)."
 
   sql = <<-EOQ
     select
-      count(*) as "Successful (200-399)"
-    from 
+      count(*) as "Successful (2xx)"
+    from
       apache_access_log
     where
-      status between 200 and 399;
+      status between 200 and 299;
   EOQ
+}
 
-  tags = {
-    folder = "Apache"
-  }
+query "activity_dashboard_redirect_count" {
+  title       = "Redirect Request Count"
+  description = "Count of redirect HTTP requests (status 3xx)."
+
+  sql = <<-EOQ
+    select
+      count(*) as "Redirections (3xx)"
+    from
+      apache_access_log
+    where
+      status between 300 and 399;
+  EOQ
 }
 
 query "activity_dashboard_bad_request_count" {
   title       = "Bad Request Count"
-  description = "Count of client error HTTP requests (status 400-499)."
+  description = "Count of client error HTTP requests (status 4xx)."
 
   sql = <<-EOQ
     select
-      count(*) as "Bad Requests (400-499)"
-    from 
+      count(*) as "Bad Requests (4xx)"
+    from
       apache_access_log
     where
       status between 400 and 499;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
 query "activity_dashboard_error_count" {
   title       = "Server Error Count"
-  description = "Count of server error HTTP requests (status 500-599)."
+  description = "Count of server error HTTP requests (status 5xx)."
 
   sql = <<-EOQ
     select
-      count(*) as "Server Errors (500-599)"
-    from 
+      count(*) as "Server Errors (5xx)"
+    from
       apache_access_log
     where
       status between 500 and 599;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
 query "activity_dashboard_top_10_clients" {
-  title       = "Top 10 Clients"
+  title       = "Top 10 Clients (Requests)"
   description = "List the top 10 client IPs by request count."
 
   sql = <<-EOQ
@@ -181,15 +185,11 @@ query "activity_dashboard_top_10_clients" {
       count(*) desc
     limit 10;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
 query "activity_dashboard_top_10_urls" {
-  title       = "Top 10 URIs"
-  description = "List the top 10 requested URIs by request count."
+  title       = "Top 10 URLs (Requests)"
+  description = "List the top 10 requested URLs by request count."
 
   sql = <<-EOQ
     select
@@ -205,14 +205,10 @@ query "activity_dashboard_top_10_urls" {
       count(*) desc
     limit 10;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
-query "activity_dashboard_requests_per_daily" {
-  title       = "Daily Requests"
+query "activity_dashboard_requests_by_day" {
+  title       = "Requests by Day"
   description = "Count of requests grouped by day."
 
   sql = <<-EOQ
@@ -226,10 +222,6 @@ query "activity_dashboard_requests_per_daily" {
     order by
       strftime(tp_timestamp, '%Y-%m-%d');
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
 query "activity_dashboard_status_distribution" {
@@ -259,14 +251,10 @@ query "activity_dashboard_status_distribution" {
         else 'Other'
       end;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
-query "activity_dashboard_method_distribution" {
-  title       = "HTTP Method Distribution"
+query "activity_dashboard_requests_by_http_method" {
+  title       = "Requests by HTTP Method"
   description = "Distribution of HTTP methods used in requests."
 
   sql = <<-EOQ
@@ -282,46 +270,33 @@ query "activity_dashboard_method_distribution" {
     order by
       count(*) asc;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
-query "activity_dashboard_slowest_endpoints" {
-  title       = "Top 10 Slowest Endpoints"
-  description = "List of the 10 slowest endpoints by average response time."
+query "activity_dashboard_requests_by_successful_requests" {
+  title       = "Top 10 URLs (Successful Requests)"
+  description = "List the top 10 requested URLs by successful request count."
 
   sql = <<-EOQ
     select
-      request_uri as "Endpoint",
-      case 
-        when avg(request_time) < 1 then round(avg(request_time) * 1000)::text || 'ms'
-        else round(avg(request_time), 1)::text || 's'
-      end as "Avg Response Time",
-      count(*) as "Request Count"
+      request_uri as "Path",
+      count(*) as "Request Count",
+      string_agg(distinct status::text, ', ' order by status::text) as "Status Codes"
     from
       apache_access_log
     where
-      request_uri is not null
-      and request_time > 0
+      status between 200 and 299
+      and request_uri is not null
     group by
       request_uri
-    having
-      count(*) > 5  -- Only show endpoints with more than 5 requests
     order by
-      avg(request_time) desc
+      count(*) desc
     limit 10;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
-query "activity_dashboard_client_error_paths" {
-  title       = "Top Client Error Paths"
-  description = "List of paths that generated the most client errors (status 400-499)."
+query "activity_dashboard_requests_by_errors" {
+  title       = "Top 10 URLs (Errors)"
+  description = "List the top 10 requested URLs by error count."
 
   sql = <<-EOQ
     select
@@ -331,7 +306,7 @@ query "activity_dashboard_client_error_paths" {
     from
       apache_access_log
     where
-      status between 400 and 499
+      status between 400 and 599
       and request_uri is not null
     group by
       request_uri
@@ -339,14 +314,10 @@ query "activity_dashboard_client_error_paths" {
       count(*) desc
     limit 10;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
 }
 
-query "activity_dashboard_user_agents_distribution" {
-  title       = "User Agents Distribution"
+query "activity_dashboard_requests_by_user_agent" {
+  title       = "Requests by User Agent"
   description = "Distribution of user agents in requests."
 
   sql = <<-EOQ
@@ -360,8 +331,4 @@ query "activity_dashboard_user_agents_distribution" {
     group by
       http_user_agent;
   EOQ
-
-  tags = {
-    folder = "Apache"
-  }
-} 
+}
