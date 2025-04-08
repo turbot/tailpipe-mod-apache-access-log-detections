@@ -32,8 +32,7 @@ benchmark "security_detections" {
     detection.cisco_snmp_rw_access_attempted,
     detection.cisco_http_auth_bypass_attempted,
     detection.cisco_ios_http_dos_attempted,
-    detection.apache_mod_status_info_disclosure_attempted,
-    detection.geoserver_sql_injection_attempted
+    detection.apache_mod_status_info_disclosure_attempted
   ]
 
   tags = merge(local.security_common_tags, {
@@ -72,62 +71,6 @@ query "sql_injection_attempted" {
         or lower(request_uri) like '%drop%table%'
         or lower(request_uri) like '%or%1=1%'
         or lower(request_uri) like '%or%1%=%1%'
-      )
-    order by
-      tp_timestamp desc;
-  EOQ
-}
-
-detection "geoserver_sql_injection_attempted" {
-  title           = "GeoServer SQL Injection Attempted (CVE-2023-25157)"
-  description     = "Detect attempts to exploit the GeoServer SQL injection vulnerability (CVE-2023-25157) affecting versions up to 2.21.4 and 2.22.2, which could allow attackers to execute arbitrary SQL commands through malicious CQL queries."
-  documentation   = file("./detections/docs/geoserver_sql_injection_attempted.md")
-  severity        = "critical"
-  display_columns = local.detection_display_columns
-
-  query = query.geoserver_sql_injection_attempted
-
-  tags = merge(local.security_common_tags, {
-    mitre_attack_ids = "TA0009:T1190",
-    cve_id           = "CVE-2023-25157"
-  })
-}
-
-query "geoserver_sql_injection_attempted" {
-  sql = <<-EOQ
-    select
-      ${local.detection_sql_columns}
-    from
-      apache_access_log
-    where
-      request_uri is not null
-      and (
-        -- GeoServer path indicators
-        (
-          lower(request_uri) like '%/geoserver/%'
-          or lower(request_uri) like '%/gs/%'
-          or lower(request_uri) like '%/wfs%'
-          or lower(request_uri) like '%/wms%'
-          or lower(request_uri) like '%/wcs%'
-          or lower(request_uri) like '%/ows%'
-        )
-        and (
-          -- OGC Filter and CQL specific patterns exploited in CVE-2023-25157
-          lower(request_uri) like '%strendswith%'
-          or lower(request_uri) like '%strstartswith%'
-          or lower(request_uri) like '%propertyislike%'
-          or lower(request_uri) like '%featureid%'
-          
-          -- CQL injection patterns
-          or lower(request_uri) like '%cql_filter=%'
-          or lower(request_uri) like '%filter=%'
-          
-          -- SQL injection patterns in CQL context
-          or lower(request_uri) like '%''%'
-          or lower(request_uri) like '%;%'
-          or lower(request_uri) like '%--%'
-          or lower(request_uri) like '%/*%'
-        )
       )
     order by
       tp_timestamp desc;
