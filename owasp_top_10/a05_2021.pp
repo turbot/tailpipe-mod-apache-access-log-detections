@@ -1,6 +1,6 @@
 locals {
   owasp_top_10_a05_2021_common_tags = merge(local.owasp_top_10_common_tags, {
-    owasp_top_10_version = "ao5_2021"
+    owasp_top_10_version = "a05_2021"
   })
 }
 
@@ -10,7 +10,7 @@ benchmark "owasp_top_10_a05_2021" {
   type        = "detection"
   children = [
     detection.apache_mod_status_info_disclosure_attempted,
-    
+    detection.apache_mod_headers_bypass_attempted,
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

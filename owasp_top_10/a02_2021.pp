@@ -1,6 +1,6 @@
 locals {
   owasp_top_10_a02_2021_common_tags = merge(local.owasp_top_10_common_tags, {
-    owasp_top_10_version = "ao2_2021"
+    owasp_top_10_version = "a02_2021"
   })
 }
 

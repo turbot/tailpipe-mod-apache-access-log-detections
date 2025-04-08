@@ -12,6 +12,9 @@ benchmark "owasp_top_10" {
     benchmark.owasp_top_10_a03_2021,
     benchmark.owasp_top_10_a04_2021,
     benchmark.owasp_top_10_a05_2021,
+    benchmark.owasp_top_10_a07_2021,
+    benchmark.owasp_top_10_a08_2021,
+    benchmark.owasp_top_10_a09_2021,
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

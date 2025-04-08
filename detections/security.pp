@@ -32,7 +32,14 @@ benchmark "security_detections" {
     detection.cisco_snmp_rw_access_attempted,
     detection.cisco_http_auth_bypass_attempted,
     detection.cisco_ios_http_dos_attempted,
-    detection.apache_mod_status_info_disclosure_attempted
+    detection.apache_mod_status_info_disclosure_attempted,
+    detection.apache_mod_headers_bypass_attempted,
+    detection.apache_mod_lua_uaf_attempted,
+    detection.apache_mod_proxy_uwsgi_bo_attempted,
+    detection.apache_mod_proxy_ssl_spoofing_attempted,
+    detection.php_xecrypt_weak_encryption_attempted,
+    detection.ip_camera_auth_bypass_attempted,
+    detection.apache_mod_proxy_headers_leak_attempted
   ]
 
   tags = merge(local.security_common_tags, {
@@ -683,10 +690,8 @@ query "lollms_path_traversal_attempted" {
           or request_uri like '%\\..\\%'
           or request_uri like '%\..\%'
           -- Also check for URL-encoded backslashes
-          or request_uri like '%%%5C%'
-          or request_uri like '%%%5c%'
-          or request_uri like '%%%5C..%%%5C%'
-          or request_uri like '%%%5c..%%%5c%'
+          or request_uri ilike '%%%5C%'
+          or request_uri ilike '%%%5C..%%%5C%'
         )
       )
     order by
@@ -1484,4 +1489,526 @@ query "apache_mod_status_info_disclosure_attempted" {
     order by
       tp_timestamp desc
 EOQ
+}
+
+detection "apache_mod_headers_bypass_attempted" {
+  title           = "Apache mod_headers Bypass Attempted (CVE-2015-4138)"
+  description     = "Detect attempts to exploit the Apache mod_headers vulnerability (CVE-2015-4138) where malicious requests could bypass security restrictions through crafted headers, potentially leading to unauthorized access or information disclosure."
+  documentation   = file("./detections/docs/apache_mod_headers_bypass_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.apache_mod_headers_bypass_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0009:T1190", # Collection:Exploit Public-Facing Application
+    cve_id           = "CVE-2015-4138"
+  })
+}
+
+query "apache_mod_headers_bypass_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential mod_headers bypass attempts
+        (
+          -- Look for header manipulation patterns
+          request_uri like '%Header%'
+          or request_uri like '%RequestHeader%'
+          or request_uri like '%SetEnvIf%'
+          or request_uri like '%mod_headers%'
+          -- Common configuration paths
+          or request_uri like '%/conf%'
+          or request_uri like '%/apache2%'
+          or request_uri like '%/httpd%'
+        )
+        and (
+          -- Look for header injection patterns
+          request_uri like '%\r%'
+          or request_uri like '%\n%'
+          or request_uri like '%0x0d%'
+          or request_uri like '%0x0a%'
+          -- URL-encoded variants
+          or request_uri like '%%0d%'
+          or request_uri like '%%0a%'
+          or request_uri like '%%0D%'
+          or request_uri like '%%0A%'
+          -- Double-encoded variants
+          or request_uri like '%250d%'
+          or request_uri like '%250a%'
+          or request_uri like '%250D%'
+          or request_uri like '%250A%'
+        )
+        -- Focus on potential bypass attempts
+        and (
+          -- Common security headers
+          request_uri like '%X-Frame-Options%'
+          or request_uri like '%Content-Security-Policy%'
+          or request_uri like '%X-XSS-Protection%'
+          or request_uri like '%X-Content-Type-Options%'
+          -- Header manipulation
+          or request_uri like '%unset%'
+          or request_uri like '%edit%'
+          or request_uri like '%merge%'
+          or request_uri like '%append%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "apache_mod_lua_uaf_attempted" {
+  title           = "Apache mod_lua Use-After-Free Attempted (CVE-2022-29964)"
+  description     = "Detect attempts to exploit the Apache mod_lua vulnerability (CVE-2022-29964) affecting versions 2.4.52 and earlier, which could allow attackers to cause a use-after-free condition leading to server crashes or remote code execution."
+  documentation   = file("./detections/docs/apache_mod_lua_uaf_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.apache_mod_lua_uaf_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0001:T1190", # Initial Access:Exploit Public-Facing Application
+    cve_id           = "CVE-2022-29964"
+  })
+}
+
+query "apache_mod_lua_uaf_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential mod_lua exploitation attempts
+        (
+          -- Look for Lua script access patterns
+          lower(request_uri) like '%.lua'
+          or lower(request_uri) like '%/lua/%'
+          or lower(request_uri) like '%/mod_lua%'
+          or lower(request_uri) like '%/scripts/lua%'
+          -- Common Lua handler paths
+          or lower(request_uri) like '%/cgi-bin/%.lua%'
+          or lower(request_uri) like '%handle-lua%'
+        )
+        and (
+          -- Look for potential exploitation patterns
+          -- Large request payloads that might trigger memory corruption
+          body_bytes_sent > 10240
+          -- Unusual or malformed request parameters
+          or request_uri like '%?%=%00%'
+          or request_uri like '%\x00%'
+          or request_uri ~ '[^\x20-\x7E]'  -- Non-printable characters
+          -- File manipulation or arbitrary code execution attempts
+          or lower(request_uri) like '%file%'
+          or lower(request_uri) like '%exec%'
+          or lower(request_uri) like '%cmd%'
+          or lower(request_uri) like '%command%'
+          or lower(request_uri) like '%system%'
+          or lower(request_uri) like '%function%'
+          or lower(request_uri) like '%eval%'
+          -- Memory manipulation indicators
+          or lower(request_uri) like '%memory%'
+          or lower(request_uri) like '%buffer%'
+          or lower(request_uri) like '%overflow%'
+        )
+        -- Focus on potential exploitation attempts
+        and (
+          -- Look for unusual HTTP methods
+          request_method != 'GET'
+          -- Suspicious status codes that might indicate successful exploitation
+          or status in (500, 502, 503, 504)
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "apache_mod_proxy_uwsgi_bo_attempted" {
+  title           = "Apache mod_proxy_uwsgi Buffer Overflow Attempted (CVE-2021-37555)"
+  description     = "Detect attempts to exploit the Apache mod_proxy_uwsgi buffer overflow vulnerability (CVE-2021-37555) affecting versions 2.4.48 and earlier, which could allow attackers to cause denial of service or potentially remote code execution."
+  documentation   = file("./detections/docs/apache_mod_proxy_uwsgi_bo_attempted.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.apache_mod_proxy_uwsgi_bo_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0001:T1190", # Initial Access:Exploit Public-Facing Application
+    cve_id           = "CVE-2021-37555"
+  })
+}
+
+query "apache_mod_proxy_uwsgi_bo_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential mod_proxy_uwsgi exploitation attempts
+        (
+          -- Look for uWSGI proxy access patterns
+          lower(request_uri) like '%/uwsgi/%'
+          or lower(request_uri) like '%uwsgi://%'
+          or lower(request_uri) like '%/mod_proxy_uwsgi%'
+          or lower(request_uri) like '%/cgi-bin/%'
+          -- Common application paths that might be proxied to uWSGI
+          or lower(request_uri) like '%/app/%'
+          or lower(request_uri) like '%/application/%'
+          or lower(request_uri) like '%/wsgi/%'
+          or lower(request_uri) like '%/django/%'
+          or lower(request_uri) like '%/flask/%'
+          or lower(request_uri) like '%/python/%'
+        )
+        and (
+          -- Look for potential buffer overflow exploitation patterns
+          -- Unusually long request URIs that could trigger buffer overflow
+          length(request_uri) > 4096
+          -- Unusual or malformed request parameters
+          or request_uri like '%\x00%'  -- Null bytes
+          or request_uri ~ '[^\x20-\x7E]'  -- Non-printable characters
+          -- Suspicious characters sequences for buffer overflow
+          or request_uri like '%AAAAA%'  -- Common padding pattern
+          or request_uri ~ '[A-Z]{128,}'  -- Long sequence of uppercase letters
+          or request_uri ~ '[a-zA-Z0-9]{256,}'  -- Long alphanumeric sequences
+          -- Specific memory addresses or shellcode-like patterns
+          or request_uri ~ '0x[0-9a-f]{8}'  -- Potential memory addresses
+          or request_uri ~ '\\x[0-9a-f]{2}\\x[0-9a-f]{2}'  -- Potential shellcode
+        )
+        -- Focus on potential exploitation attempts
+        and (
+          -- Suspicious response indicators
+          status in (500, 502, 503, 504)  -- Server errors that might indicate exploitation
+          -- Suspicious request methods
+          or request_method not in ('GET', 'POST', 'HEAD')
+          -- Potential proxy headers
+          or lower(request_uri) like '%x-forwarded-%'
+          or lower(request_uri) like '%proxy-%'
+          or lower(request_uri) like '%uwsgi.%'
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "apache_mod_proxy_ssl_spoofing_attempted" {
+  title           = "Apache mod_proxy SSL Spoofing Attempted (CVE-2008-1319)"
+  description     = "Detect attempts to exploit the Apache mod_proxy SSL spoofing vulnerability (CVE-2008-1319) affecting versions 2.0.63 and earlier, which could allow attackers to spoof client identity in reverse proxy configurations."
+  documentation   = file("./detections/docs/apache_mod_proxy_ssl_spoofing_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.apache_mod_proxy_ssl_spoofing_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0005:T1557", # Defense Evasion:Man-in-the-Middle
+    cve_id           = "CVE-2008-1319"
+  })
+}
+
+query "apache_mod_proxy_ssl_spoofing_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential mod_proxy SSL spoofing attempts
+        (
+          -- Look for proxy-related paths
+          lower(request_uri) like '%/proxy/%'
+          or lower(request_uri) like '%proxy.handler%'
+          or lower(request_uri) like '%mod_proxy%'
+          or lower(request_uri) like '%proxy:%'
+          or lower(request_uri) like '%balancer%'
+          -- SSL/TLS related indicators
+          or lower(request_uri) like '%https:%'
+          or lower(request_uri) like '%ssl%'
+          or lower(request_uri) like '%tls%'
+          or lower(request_uri) like '%certificate%'
+          -- Common reverse proxy paths
+          or lower(request_uri) like '%/api/%'
+          or lower(request_uri) like '%/gateway/%'
+          or lower(request_uri) like '%/backend/%'
+        )
+        and (
+          -- Look for potential SSL spoofing patterns
+          -- SSL/TLS handshake manipulation
+          request_uri like '%client-cert%'
+          or request_uri like '%ssl-cert%'
+          or request_uri like '%client-verify%'
+          or request_uri like '%ssl-verify%'
+          -- SSL/TLS header manipulation
+          or request_uri like '%x-ssl%'
+          or request_uri like '%x-client%'
+          or request_uri like '%x-verify%'
+          -- Proxy header manipulation
+          or request_uri like '%x-forwarded-%'
+          or request_uri like '%forwarded-%'
+          -- URL-encoded variants
+          or request_uri like '%25ssl%'
+          or request_uri like '%25client%'
+          or request_uri like '%25forwarded%'
+        )
+        -- Focus on potential exploitation indicators
+        and (
+          -- Non-standard HTTP methods
+          request_method not in ('GET', 'POST', 'HEAD')
+          -- Suspicious proxy headers in URI
+          or lower(request_uri) like '%host:%'
+          or lower(request_uri) like '%connection:%'
+          or lower(request_uri) like '%authorization:%'
+          -- Suspicious response status
+          or status in (407, 502, 503)
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "php_xecrypt_weak_encryption_attempted" {
+  title           = "PHP XECrypt Weak Encryption Attempted (CVE-2008-3485)"
+  description     = "Detect attempts to exploit the PHP XECrypt class vulnerability (CVE-2008-3485) affecting the encryption and decryption functions, which could allow attackers to gain access to sensitive information due to weak cryptographic implementation."
+  documentation   = file("./detections/docs/php_xecrypt_weak_encryption_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.php_xecrypt_weak_encryption_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0006:T1555", # Credential Access:Credentials from Password Stores
+    cve_id           = "CVE-2008-3485"
+  })
+}
+
+query "php_xecrypt_weak_encryption_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential PHP XECrypt exploitation attempts
+        (
+          -- Look for PHP file access patterns
+          lower(request_uri) like '%.php'
+          -- Common PHP application paths
+          or lower(request_uri) like '%/includes/%'
+          or lower(request_uri) like '%/classes/%'
+          or lower(request_uri) like '%/lib/%'
+          or lower(request_uri) like '%/modules/%'
+          or lower(request_uri) like '%/components/%'
+          -- Specific XECrypt-related paths
+          or lower(request_uri) like '%/xecrypt%'
+          or lower(request_uri) like '%/crypt%'
+          or lower(request_uri) like '%/encrypt%'
+          or lower(request_uri) like '%/decrypt%'
+        )
+        and (
+          -- Look for potential XECrypt exploitation patterns
+          -- XECrypt class and method usage
+          lower(request_uri) like '%xecrypt%'
+          or lower(request_uri) like '%xcrypt%'
+          or lower(request_uri) like '%encrypt%'
+          or lower(request_uri) like '%decrypt%'
+          or lower(request_uri) like '%encodeString%'
+          or lower(request_uri) like '%decodeString%'
+          -- Cryptographic parameter manipulation
+          or lower(request_uri) like '%key=%'
+          or lower(request_uri) like '%salt=%'
+          or lower(request_uri) like '%iv=%'
+          or lower(request_uri) like '%cipher=%'
+          -- Base64 encoded data (common in weak crypto)
+          or request_uri ~ '[A-Za-z0-9+/]{20,}={0,2}'
+          -- Common PHP crypto exploitation patterns
+          or lower(request_uri) like '%mode=%'
+          or lower(request_uri) like '%algo=%'
+          or lower(request_uri) like '%method=%'
+        )
+        -- Focus on potential exploitation indicators
+        and (
+          -- Look for suspicious HTTP methods
+          request_method = 'POST'
+          -- Suspicious parameters
+          or lower(request_uri) like '%pass%'
+          or lower(request_uri) like '%password%'
+          or lower(request_uri) like '%secret%'
+          or lower(request_uri) like '%token%'
+          or lower(request_uri) like '%cred%'
+          -- Potential data leakage responses
+          or status = 200
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "ip_camera_auth_bypass_attempted" {
+  title           = "IP Camera Authentication Bypass Attempted (CVE-2008-4315)"
+  description     = "Detect attempts to exploit the 1-Way IP Camera/MPEG4 Video Server vulnerability (CVE-2008-4315) where attackers could bypass authentication by directly accessing .htm files, potentially allowing unauthorized viewing of camera feeds and configuration."
+  documentation   = file("./detections/docs/ip_camera_auth_bypass_attempted.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.ip_camera_auth_bypass_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0001:T1190", # Initial Access:Exploit Public-Facing Application
+    cve_id           = "CVE-2008-4315"
+  })
+}
+
+query "ip_camera_auth_bypass_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential IP camera authentication bypass attempts
+        (
+          -- Look for IP camera related paths
+          lower(request_uri) like '%/camera%'
+          or lower(request_uri) like '%/ipcam%'
+          or lower(request_uri) like '%/webcam%'
+          or lower(request_uri) like '%/netcam%'
+          or lower(request_uri) like '%/mpeg4%'
+          or lower(request_uri) like '%/video%'
+          or lower(request_uri) like '%/stream%'
+          -- Common IP camera vendor paths
+          or lower(request_uri) like '%/1-way%'
+          or lower(request_uri) like '%/oneway%'
+          or lower(request_uri) like '%/axis%'
+          or lower(request_uri) like '%/dahua%'
+          or lower(request_uri) like '%/hikvision%'
+        )
+        and (
+          -- Look for direct access to .htm files (CVE-2008-4315 specific)
+          lower(request_uri) like '%.htm'
+          or lower(request_uri) like '%.html'
+          -- Common camera pages that might be targeted
+          or lower(request_uri) like '%/view.htm%'
+          or lower(request_uri) like '%/index.htm%'
+          or lower(request_uri) like '%/live.htm%'
+          or lower(request_uri) like '%/stream.htm%'
+          or lower(request_uri) like '%/image.htm%'
+          or lower(request_uri) like '%/video.htm%'
+          or lower(request_uri) like '%/main.htm%'
+          -- Camera configuration pages
+          or lower(request_uri) like '%/admin.htm%'
+          or lower(request_uri) like '%/config.htm%'
+          or lower(request_uri) like '%/setup.htm%'
+          or lower(request_uri) like '%/system.htm%'
+        )
+        -- Focus on potential authentication bypass indicators
+        and (
+          -- Authentication bypass patterns
+          lower(request_uri) not like '%login%'
+          and lower(request_uri) not like '%auth%'
+          and lower(request_uri) not like '%user%'
+          and lower(request_uri) not like '%pass%'
+          -- Suspicious response indicators
+          or status = 200
+          -- Suspicious methods
+          or request_method not in ('GET', 'HEAD')
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "apache_mod_proxy_headers_leak_attempted" {
+  title           = "Apache mod_proxy Headers Information Leak Attempted (CVE-2007-3730)"
+  description     = "Detect attempts to exploit the Apache mod_proxy and mod_headers interaction vulnerability (CVE-2007-3730) affecting versions 2.2.4 and earlier, which could allow attackers to obtain internal IP addresses of systems behind a reverse proxy."
+  documentation   = file("./detections/docs/apache_mod_proxy_headers_leak_attempted.md")
+  severity        = "medium"
+  display_columns = local.detection_display_columns
+
+  query = query.apache_mod_proxy_headers_leak_attempted
+
+  tags = merge(local.security_common_tags, {
+    mitre_attack_ids = "TA0009:T1592", # Reconnaissance:Gather Victim Host Information
+    cve_id           = "CVE-2007-3730"
+  })
+}
+
+query "apache_mod_proxy_headers_leak_attempted" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- Detect potential mod_proxy and mod_headers information leak attempts
+        (
+          -- Look for proxy-related paths
+          lower(request_uri) like '%/proxy/%'
+          or lower(request_uri) like '%proxy.handler%'
+          or lower(request_uri) like '%mod_proxy%'
+          or lower(request_uri) like '%proxy:%'
+          or lower(request_uri) like '%balancer%'
+          -- Common reverse proxy paths
+          or lower(request_uri) like '%/api/%'
+          or lower(request_uri) like '%/gateway/%'
+          or lower(request_uri) like '%/backend/%'
+          -- Header-related paths
+          or lower(request_uri) like '%header%'
+          or lower(request_uri) like '%mod_headers%'
+        )
+        and (
+          -- Look for potential information leak exploitation patterns
+          -- Header manipulation attempts
+          request_uri like '%connection:%'
+          or request_uri like '%host:%'
+          or request_uri like '%x-forwarded-%'
+          or request_uri like '%via:%'
+          or request_uri like '%forwarded:%'
+          or request_uri like '%proxy-connection:%'
+          -- Information disclosure probes
+          or request_uri like '%internal%'
+          or request_uri like '%local%'
+          or request_uri like '%private%'
+          or request_uri like '%address%'
+          or request_uri like '%ip%'
+          -- URL-encoded variants
+          or request_uri like '%25connection%'
+          or request_uri like '%25host%'
+          or request_uri like '%25forwarded%'
+        )
+        -- Focus on potential information gathering indicators
+        and (
+          -- Multiple requests that could indicate enumeration
+          request_uri similar to '%(\.\.\/|%2e%2e\/|%252e%252e\/)%'
+          -- Unusual request methods
+          or request_method not in ('GET', 'POST', 'HEAD')
+          -- Suspicious status codes that might indicate successful exploitation
+          or status in (200, 302, 307)
+        )
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
 }
