@@ -9,8 +9,8 @@ benchmark "owasp_top_10_a08_2021" {
   description = "Software and data integrity failures relate to code and infrastructure that does not protect against integrity violations."
   type        = "detection"
   children = [
-    detection.apache_mod_proxy_ssl_spoofing_attempted,
-    detection.php_xecrypt_weak_encryption_attempted,
+    detection.insecure_deserialization_attempted,
+    detection.unauthorized_package_access
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

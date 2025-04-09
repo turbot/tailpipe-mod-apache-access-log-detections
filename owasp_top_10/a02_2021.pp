@@ -9,10 +9,8 @@ benchmark "owasp_top_10_a02_2021" {
   description = "The first thing is to determine the protection needs of data in transit and at rest. For example, passwords, credit card numbers, health records, personal information, and business secrets require extra protection, mainly if that data falls under privacy laws, e.g., EU's General Data Protection Regulation (GDPR), or regulations, e.g., financial data protection such as PCI Data Security Standard (PCI DSS)."
   type        = "detection"
   children = [
-    detection.insecure_session_cookie_detected,
-    detection.backup_client_password_hash_exposed,
-    detection.camera_config_exposure_attempted,
-    detection.network_config_exposure_attempted,
+    detection.cleartext_credentials_transmitted,
+    detection.weak_ssl_tls_detected
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

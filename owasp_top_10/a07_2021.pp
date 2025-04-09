@@ -9,8 +9,7 @@ benchmark "owasp_top_10_a07_2021" {
   description = "Confirmation of the user's identity, authentication, and session management is critical to protect against authentication-related attacks."
   type        = "detection"
   children = [
-    detection.apache_mod_lua_uaf_attempted,
-    detection.apache_mod_proxy_uwsgi_bo_attempted,
+    detection.suspicious_user_agent_detected
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

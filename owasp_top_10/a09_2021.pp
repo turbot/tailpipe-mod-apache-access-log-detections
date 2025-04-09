@@ -9,8 +9,8 @@ benchmark "owasp_top_10_a09_2021" {
   description = "Security logging and monitoring failures relate to code and infrastructure that does not protect against integrity violations."
   type        = "detection"
   children = [
-    detection.ip_camera_auth_bypass_attempted,
-    detection.apache_mod_proxy_headers_leak_attempted,
+    detection.log_file_access_attempted,
+    detection.security_log_manipulation_attempted
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {
