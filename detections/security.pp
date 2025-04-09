@@ -823,25 +823,25 @@ query "vulnerable_component_access_attempted" {
       request_uri is not null
       and (
         -- Log4j/Log4Shell vulnerability
-        lower(request_uri) like '%${jndi : ldap : //%'
-  or lower(request_uri) like ' % $ { jndi : rmi :                                                                                                                                                                                              //%'
-    --Spring4Shell vulnerability
-    or lower(request_uri) like ' % class.module.classLoader % '
-    or lower(request_uri) like ' % class.module.classLoader.resources % '
-    --Struts vulnerabilities
-    or lower(request_uri) like ' % ? action = % 24 % 7 B % '
-    or lower(request_uri) like ' % multipart / form-data % '
-    --Apache OFBiz vulnerabilities
-    or lower(request_uri) like ' % / webtools / control / xmlrpc % '
-    --Drupal vulnerabilities
-    or lower(request_uri) like ' % / ? q = node / add % '
-    or lower(request_uri) like ' % / user / register % '
-    --WordPress specific vulnerabilities
-    or lower(request_uri) like ' % / wp-content / plugins / wp-file-manager % '
-    or lower(request_uri) like ' % / wp-content / plugins / elementor % '
-  )
-  order by
-  tp_timestamp desc ;
+        lower(request_uri) like '%$${jndi:ldap://%'
+        or lower(request_uri) like '%$${jndi:rmi://%'
+        -- Spring4Shell vulnerability
+        or lower(request_uri) like '%class.module.classLoader%'
+        or lower(request_uri) like '%class.module.classLoader.resources%'
+        -- Struts vulnerabilities
+        or lower(request_uri) like '%?action=%24%7B%'
+        or lower(request_uri) like '%multipart/form-data%'
+        -- Apache OFBiz vulnerabilities
+        or lower(request_uri) like '%/webtools/control/xmlrpc%'
+        -- Drupal vulnerabilities
+        or lower(request_uri) like '%/?q=node/add%'
+        or lower(request_uri) like '%/user/register%'
+        -- WordPress specific vulnerabilities
+        or lower(request_uri) like '%/wp-content/plugins/wp-file-manager%'
+        or lower(request_uri) like '%/wp-content/plugins/elementor%'
+      )
+    order by
+      tp_timestamp desc;
   EOQ
 }
 
