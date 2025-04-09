@@ -21,7 +21,7 @@ locals {
   status as status_src,
   timestamp as timestamp_src,
   *
-  exclude status, timestamp
+  exclude (status, timestamp)
   EOQ
 }
 
