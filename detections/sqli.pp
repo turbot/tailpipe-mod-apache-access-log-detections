@@ -5,17 +5,17 @@ locals {
 }
 
 benchmark "sql_injection_detections" {
-  title       = "SQL Injection Detections"
-  description = "This benchmark contains sql_injection-focused detections when scanning access logs."
+  title       = "SQL Injection (SQLi) Detections"
+  description = "This benchmark contains SQLi focused detections when scanning access logs."
   type        = "detection"
   children = [
     detection.sql_injection_basic_attack,
-    detection.sql_injection_union_based,
     detection.sql_injection_blind_based,
     detection.sql_injection_error_based,
     detection.sql_injection_time_based,
+    detection.sql_injection_union_based,
     detection.sql_injection_user_agent_based,
-    detection.suspicious_automation_sqli
+    detection.suspicious_automation_sqli,
   ]
 
   tags = merge(local.sql_injection_common_tags, {
@@ -57,7 +57,6 @@ query "sql_injection_basic_attack" {
         or request_uri ilike '%alter%table%'
         or request_uri ilike '%exec%xp_%'
         or request_uri ilike '%information_schema%'
-        
         -- Common SQL injection patterns
         or request_uri ilike '%or%1=1%'
         or request_uri ilike '%or%1%=%1%'
@@ -66,7 +65,6 @@ query "sql_injection_basic_attack" {
         or request_uri ilike '%--+%'
         or request_uri ilike '%-- %'
         or request_uri ilike '%;--%'
-        
         -- URL encoded variants
         or request_uri ilike '%\x27%'
         or request_uri ilike '%\x22%'
@@ -105,14 +103,12 @@ query "sql_injection_union_based" {
         or request_uri ilike '%union%all%select%'
         or request_uri ilike '%union+select%'
         or request_uri ilike '%union+all+select%'
-        
         -- URL encoded variants
         or request_uri ilike '%union%20select%'
         or request_uri ilike '%union%20all%20select%'
         or request_uri ilike '%union%09select%'
         or request_uri ilike '%union%0Aselect%'
         or request_uri ilike '%union%0Dselect%'
-        
         -- Evasion techniques specific to UNION
         or request_uri ilike '%uni%on%sel%ect%'
         or request_uri ilike '%uni*/*/on/**/sel/**/ect%'
@@ -157,13 +153,11 @@ query "sql_injection_blind_based" {
         or request_uri ilike '%ascii%(%'
         or request_uri ilike '%length%(%'
         or request_uri ilike '%benchmark%(%'
-        
         -- Blind patterns with comparison operators
         or request_uri ilike '%and+1>0%'
         or request_uri ilike '%and+1<2%'
         or request_uri ilike '%and+ascii(substring%'
         or request_uri ilike '%and+length(%)%'
-        
         -- URL encoded variants common in blind injections
         or request_uri ilike '%and%20%'
         or request_uri ilike '%and%28select%'
@@ -207,7 +201,6 @@ query "sql_injection_error_based" {
         or request_uri ilike '%concat%(%'
         or request_uri ilike '%concat_ws%(%'
         or request_uri ilike '%group_concat%(%'
-        
         -- Known error-based functions with database fingerprinting
         or request_uri ilike '%db_name%(%'
         or request_uri ilike '%@@version%'
@@ -215,7 +208,6 @@ query "sql_injection_error_based" {
         or request_uri ilike '%pg_sleep%(%'
         or request_uri ilike '%sys.%'
         or request_uri ilike '%sys.xp_%'
-        
         -- Common error triggers
         or request_uri ilike '%having%1=1%'
         or request_uri ilike '%order%by%'
@@ -256,13 +248,11 @@ query "sql_injection_time_based" {
         or request_uri ilike '%dbms_pipe.receive_message%(%'
         or request_uri ilike '%waitfor%delay%'
         or request_uri ilike '%GENERATE_SERIES%'
-        
         -- Time-based with conditional logic
         or request_uri ilike '%if%sleep%'
         or request_uri ilike '%if%benchmark%'
         or request_uri ilike '%case%when%sleep%'
         or request_uri ilike '%and%sleep%'
-        
         -- URL encoded variants
         or request_uri ilike '%and%20sleep%'
         or request_uri ilike '%or%20sleep%'
@@ -303,7 +293,6 @@ query "sql_injection_user_agent_based" {
         or http_user_agent ilike '%update%set%'
         or http_user_agent ilike '%delete%from%'
         or http_user_agent ilike '%drop%table%'
-        
         -- Common SQL comment markers and logic patterns
         or http_user_agent ilike '%--+%'
         or http_user_agent ilike '%-- %'
@@ -312,14 +301,12 @@ query "sql_injection_user_agent_based" {
         or http_user_agent ilike '%or%1=1%'
         or http_user_agent ilike '%or%1%=%1%'
         or http_user_agent ilike '%or%true%'
-        
         -- Database-specific User-Agent attacks
         or http_user_agent ilike '%@@version%'
         or http_user_agent ilike '%information_schema%'
-        or http_user_agent ilike '%sqlite_master%'
+        or http_user_agent ilike '%sql_injectionte_master%'
         or http_user_agent ilike '%pg_tables%'
         or http_user_agent ilike '%sys.%'
-        
         -- Time-based techniques
         or http_user_agent ilike '%sleep(%'
         or http_user_agent ilike '%benchmark(%'
@@ -365,7 +352,6 @@ query "suspicious_automation_sqli" {
         http_user_agent ilike '%sqlmap%'
         or http_user_agent ilike '%havij%'
         or http_user_agent ilike '%sqlninja%'
-        
         -- Generic automation tools often used for SQLi
         or http_user_agent ilike '%python%'
         or http_user_agent ilike '%curl/%'
@@ -373,7 +359,6 @@ query "suspicious_automation_sqli" {
         or http_user_agent ilike '%go-http-client%'
         or http_user_agent ilike '%ruby%'
         or http_user_agent ilike '%perl%'
-        
         -- Missing or highly suspicious user agents
         or http_user_agent = ''
         or http_user_agent is null

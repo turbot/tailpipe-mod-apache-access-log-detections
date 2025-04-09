@@ -5,7 +5,8 @@ benchmark "access_log_detections" {
   children = [
     #benchmark.security_detections,
     benchmark.local_file_inclusion_detections,
-    benchmark.sql_injection_detections
+    benchmark.sql_injection_detections,
+    benchmark.xss_detections,
   ]
 
   tags = merge(local.apache_access_log_detections_common_tags, {

@@ -1,26 +1,26 @@
 locals {
-  lfi_common_tags = merge(local.apache_access_log_detections_common_tags, {
+  local_file_inclusion_common_tags = merge(local.apache_access_log_detections_common_tags, {
     category = "Security"
     attack_type = "Local File Inclusion"
   })
 }
 
 benchmark "local_file_inclusion_detections" {
-  title       = "Local File Inclusion Detections"
+  title       = "Local File Inclusion (LFI) Detections"
   description = "This benchmark contains detections for Local File Inclusion (LFI) attacks which could expose sensitive system or application files."
   type        = "detection"
   children = [
-    detection.path_traversal_attack,
     detection.encoded_path_traversal_attack,
-    detection.os_file_access_attempt,
-    detection.restricted_file_access_attempt,
+    detection.header_based_lfi_attempt,
     detection.hidden_file_access_attempt,
     detection.malicious_scanner,
+    detection.os_file_access_attempt,
+    detection.path_traversal_attack,
+    detection.restricted_file_access_attempt,
     detection.user_agent_attack,
-    detection.header_based_lfi_attempt
   ]
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     type = "Benchmark"
   })
 }
@@ -34,7 +34,7 @@ detection "path_traversal_attack" {
 
   query = query.path_traversal_attack
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
@@ -72,7 +72,7 @@ detection "encoded_path_traversal_attack" {
 
   query = query.encoded_path_traversal_attack
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
@@ -118,7 +118,7 @@ detection "os_file_access_attempt" {
 
   query = query.os_file_access_attempt
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
@@ -167,7 +167,7 @@ detection "restricted_file_access_attempt" {
 
   query = query.restricted_file_access_attempt
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
@@ -219,7 +219,7 @@ detection "hidden_file_access_attempt" {
 
   query = query.hidden_file_access_attempt
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
@@ -257,8 +257,6 @@ query "hidden_file_access_attempt" {
   EOQ
 }
 
-# NEW DETECTIONS THAT INCORPORATE USER-AGENT HEADER
-
 detection "malicious_scanner" {
   title           = "Malicious Scanner or Attack Tool"
   description     = "Detect when known penetration testing or vulnerability scanning tools are used against the web server. These tools are often used for reconnaissance before targeted attacks."
@@ -268,7 +266,7 @@ detection "malicious_scanner" {
 
   query = query.malicious_scanner
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0043:T1592"
   })
 }
@@ -327,7 +325,7 @@ detection "user_agent_attack" {
 
   query = query.user_agent_attack
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1190"
   })
 }
@@ -352,7 +350,6 @@ query "user_agent_attack" {
         or http_user_agent ilike '%1%=%1%'
         or http_user_agent ilike '%sleep(%'
         or http_user_agent ilike '%benchmark(%'
-        
         -- LFI patterns
         or http_user_agent ilike '%../%'
         or http_user_agent ilike '%/../%'
@@ -363,13 +360,11 @@ query "user_agent_attack" {
         or http_user_agent ilike '%/etc/shadow%'
         or http_user_agent ilike '%/win.ini%'
         or http_user_agent ilike '%c:\\windows%'
-        
         -- XSS patterns
         or http_user_agent ilike '%<script%'
         or http_user_agent ilike '%alert(%'
         or http_user_agent ilike '%onerror=%'
         or http_user_agent ilike '%onload=%'
-        
         -- OS Command injection
         or http_user_agent ilike '%;%'
         or http_user_agent ilike '%&&%'
@@ -391,7 +386,7 @@ detection "header_based_lfi_attempt" {
 
   query = query.header_based_lfi_attempt
 
-  tags = merge(local.lfi_common_tags, {
+  tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1190"
   })
 }
@@ -410,7 +405,6 @@ query "header_based_lfi_attempt" {
         or http_user_agent ilike '%/../%'
         or http_user_agent ilike '%\\..\\%'
         or http_user_agent ilike '%\\.\\%'
-        
         -- Encoded path traversal in User-Agent
         or http_user_agent ilike '%..%2f%'
         or http_user_agent ilike '%..%2F%'
@@ -418,7 +412,6 @@ query "header_based_lfi_attempt" {
         or http_user_agent ilike '%%2E%2E%2F%'
         or http_user_agent ilike '%..%5c%'
         or http_user_agent ilike '%..%5C%'
-        
         -- OS file access in User-Agent
         or http_user_agent ilike '%/etc/passwd%'
         or http_user_agent ilike '%/etc/shadow%'

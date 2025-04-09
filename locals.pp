@@ -18,9 +18,10 @@ locals {
   tp_source_ip as source_ip,
   tp_id as source_id,
   -- Create new aliases to preserve original row data
-  timestamp as timestamp_src,
   status as status_src,
+  timestamp as timestamp_src,
   *
+  exclude status, timestamp
   EOQ
 }
 
