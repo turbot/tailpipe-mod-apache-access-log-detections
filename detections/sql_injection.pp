@@ -13,7 +13,9 @@ benchmark "sql_injection_detections" {
     detection.sql_injection_union_based,
     detection.sql_injection_blind_based,
     detection.sql_injection_error_based,
-    detection.sql_injection_time_based
+    detection.sql_injection_time_based,
+    detection.sql_injection_user_agent_based,
+    detection.suspicious_automation_sqli
   ]
 
   tags = merge(local.sql_injection_common_tags, {
@@ -251,24 +253,132 @@ query "sql_injection_time_based" {
         request_uri ilike '%sleep%(%'
         or request_uri ilike '%benchmark%(%'
         or request_uri ilike '%pg_sleep%(%'
+        or request_uri ilike '%dbms_pipe.receive_message%(%'
         or request_uri ilike '%waitfor%delay%'
-        or request_uri ilike '%dbms_pipe.receive_message%'
-        or request_uri ilike '%generate_series%'
-        or request_uri ilike '%100000000)%'
+        or request_uri ilike '%GENERATE_SERIES%'
         
-        -- Common time-based patterns
+        -- Time-based with conditional logic
+        or request_uri ilike '%if%sleep%'
+        or request_uri ilike '%if%benchmark%'
+        or request_uri ilike '%case%when%sleep%'
         or request_uri ilike '%and%sleep%'
-        or request_uri ilike '%or%sleep%'
-        or request_uri ilike '%and%benchmark%'
-        or request_uri ilike '%or%benchmark%'
-        or request_uri ilike '%and%pg_sleep%'
-        or request_uri ilike '%or%pg_sleep%'
         
-        -- URL encoded variants for time-based attacks
-        or request_uri ilike '%and%28select%20sleep%'
-        or request_uri ilike '%and%20if%28%'
-        or request_uri ilike '%and%20%28select%201%20from%20%28select%20sleep%'
-        or request_uri ilike '%make_set%28'
+        -- URL encoded variants
+        or request_uri ilike '%and%20sleep%'
+        or request_uri ilike '%or%20sleep%'
+        or request_uri ilike '%waitfor%20delay%'
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "sql_injection_user_agent_based" {
+  title           = "SQL Injection User Agent Based Attack"
+  description     = "Detect SQL injection attacks that use the User-Agent header rather than URL parameters to bypass WAF protections or input filtering."
+  documentation   = file("./detections/docs/sql_injection_user_agent_based.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.sql_injection_user_agent_based
+
+  tags = merge(local.sql_injection_common_tags, {
+    mitre_attack_ids = "TA0009:T1190"
+  })
+}
+
+query "sql_injection_user_agent_based" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      http_user_agent is not null
+      and (
+        -- Basic SQL injection patterns in User-Agent
+        http_user_agent ilike '%select%from%'
+        or http_user_agent ilike '%union%select%'
+        or http_user_agent ilike '%insert%into%'
+        or http_user_agent ilike '%update%set%'
+        or http_user_agent ilike '%delete%from%'
+        or http_user_agent ilike '%drop%table%'
+        
+        -- Common SQL comment markers and logic patterns
+        or http_user_agent ilike '%--+%'
+        or http_user_agent ilike '%-- %'
+        or http_user_agent ilike '%;--%'
+        or http_user_agent ilike '%/*%*/%'
+        or http_user_agent ilike '%or%1=1%'
+        or http_user_agent ilike '%or%1%=%1%'
+        or http_user_agent ilike '%or%true%'
+        
+        -- Database-specific User-Agent attacks
+        or http_user_agent ilike '%@@version%'
+        or http_user_agent ilike '%information_schema%'
+        or http_user_agent ilike '%sqlite_master%'
+        or http_user_agent ilike '%pg_tables%'
+        or http_user_agent ilike '%sys.%'
+        
+        -- Time-based techniques
+        or http_user_agent ilike '%sleep(%'
+        or http_user_agent ilike '%benchmark(%'
+        or http_user_agent ilike '%pg_sleep(%'
+        or http_user_agent ilike '%waitfor%delay%'
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "suspicious_automation_sqli" {
+  title           = "Suspicious Automation and SQL Injection Attempts"
+  description     = "Detect potentially malicious automation combined with SQL injection patterns in requests, which indicates reconnaissance and probing for database vulnerabilities."
+  documentation   = file("./detections/docs/suspicious_automation_sqli.md")
+  severity        = "high"
+  display_columns = local.detection_display_columns
+
+  query = query.suspicious_automation_sqli
+
+  tags = merge(local.sql_injection_common_tags, {
+    mitre_attack_ids = "TA0043:T1592,TA0009:T1190"
+  })
+}
+
+query "suspicious_automation_sqli" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      -- SQL injection patterns in the request URI
+      (
+        request_uri ilike '%union%select%'
+        or request_uri ilike '%select%from%'
+        or request_uri ilike '%1=1%'
+        or request_uri ilike '%information_schema%'
+      )
+      -- Combined with suspicious user agents
+      and (
+        -- Known SQLi tools
+        http_user_agent ilike '%sqlmap%'
+        or http_user_agent ilike '%havij%'
+        or http_user_agent ilike '%sqlninja%'
+        
+        -- Generic automation tools often used for SQLi
+        or http_user_agent ilike '%python%'
+        or http_user_agent ilike '%curl/%'
+        or http_user_agent ilike '%wget/%'
+        or http_user_agent ilike '%go-http-client%'
+        or http_user_agent ilike '%ruby%'
+        or http_user_agent ilike '%perl%'
+        
+        -- Missing or highly suspicious user agents
+        or http_user_agent = ''
+        or http_user_agent is null
+        or http_user_agent = 'Mozilla'
+        or http_user_agent ilike '%vulnerable%'
       )
     order by
       tp_timestamp desc;
