@@ -580,11 +580,44 @@ query "cleartext_credentials_transmitted" {
       and remote_addr is not null
       and scheme = 'http' 
       and (
+        -- Common authentication endpoint patterns
         lower(request_uri) like '%/login%' 
         or lower(request_uri) like '%/signin%'
         or lower(request_uri) like '%/auth%'
+        or lower(request_uri) like '%/authenticate%'
+        or lower(request_uri) like '%/session%'
+        or lower(request_uri) like '%/account%'
+        or lower(request_uri) like '%/logon%'
+        or lower(request_uri) like '%/sign-in%'
+        or lower(request_uri) like '%/log-in%'
+        -- Common credential-related parameters
+        or lower(request_uri) like '%password=%'
+        or lower(request_uri) like '%username=%'
+        or lower(request_uri) like '%credential=%'
+        or lower(request_uri) like '%email=%'
+        or lower(request_uri) like '%user=%'
       )
-      and request_method = 'POST'
+      and (
+        -- Most credential submissions use POST
+        request_method = 'POST'
+        -- Some older or non-standard forms might use GET (less secure but happens)
+        or (
+          request_method = 'GET' and (
+            lower(request_uri) like '%password=%' 
+            or lower(request_uri) like '%pwd=%'
+          )
+        )
+      )
+      -- Exclude static resources that might have login in the path but don't handle credentials
+      and lower(request_uri) not like '%.css'
+      and lower(request_uri) not like '%.js'
+      and lower(request_uri) not like '%.jpg'
+      and lower(request_uri) not like '%.png'
+      and lower(request_uri) not like '%.gif'
+      and lower(request_uri) not like '%.ico'
+      and lower(request_uri) not like '%.woff'
+      -- Exclude paths where login is likely just part of a different word
+      and lower(request_uri) not like '%/blogin%'
     order by
       tp_timestamp desc;
   EOQ
@@ -613,11 +646,13 @@ query "weak_ssl_tls_detected" {
     where
       http_user_agent is not null
       and (
+        -- Check for old SSL/TLS indicators in user agent
         lower(http_user_agent) like '%sslv3%'
         or lower(http_user_agent) like '%tls1.0%'
         or lower(http_user_agent) like '%tls1.1%'
         or lower(request_uri) like '%downgrade_protocol%'
       )
+      and status in (200, 302, 400, 401, 403)
       and scheme = 'https'
     order by
       tp_timestamp desc;
@@ -647,21 +682,43 @@ query "insecure_deserialization_attempted" {
     where
       request_uri is not null
       and (
-        -- Java serialized objects
-        lower(request_uri) like '%/invoke/%' 
-        or lower(request_uri) like '%/readObject%'
-        -- PHP specific
-        or lower(request_uri) like '%/unserialize%'
-        or lower(request_uri) like '%/deserialize%'
-        -- Node.js specific
-        or lower(request_uri) like '%/node-serialize%'
-        -- Ruby/Rails specific
-        or lower(request_uri) like '%/yaml/load%'
-        -- .NET specific
-        or lower(request_uri) like '%/viewstate%'
-        or lower(request_uri) like '%/binary-formatter%'
+        -- Java serialized objects (more specific patterns)
+        (lower(request_uri) like '%/invoke/%' and 
+          (lower(request_uri) like '%java%' or lower(request_uri) like '%serialized%'))
+        or (lower(request_uri) like '%/readobject%' and lower(request_uri) like '%java%')
+        
+        -- PHP specific with context
+        or (lower(request_uri) like '%/unserialize%' and lower(request_uri) like '%php%')
+        or (lower(request_uri) like '%/deserialize%' and 
+            (lower(request_uri) like '%php%' or lower(request_uri) like '%data%'))
+        
+        -- Node.js specific with context
+        or (lower(request_uri) like '%/node-serialize%' and lower(request_uri) like '%json%')
+        
+        -- Ruby/Rails specific with context
+        or (lower(request_uri) like '%/yaml/load%' and lower(request_uri) like '%ruby%')
+        
+        -- .NET specific with context
+        or (lower(request_uri) like '%/viewstate%' and lower(request_uri) like '%aspx%')
+        or (lower(request_uri) like '%/binary-formatter%' and lower(request_uri) like '%net%')
+        
+        -- Common serialization indicators with suspicious patterns
+        or lower(request_uri) like '%java.io.serializable%'
+        or lower(request_uri) like '%base64%serializ%'
+        or lower(request_uri) like '%gadget%chain%'
+        or lower(request_uri) like '%ysoserial%'
       )
+      -- Require POST method as deserialization is typically performed on POST data
       and request_method = 'POST'
+      
+      -- Consider non-successful responses as more suspicious
+      and status not in (200, 301, 302, 304)
+      
+      -- Exclude paths that are known to be legitimate
+      and lower(request_uri) not like '%/docs/%'
+      and lower(request_uri) not like '%/example/%'
+      and lower(request_uri) not like '%/tutorial/%'
+      and lower(request_uri) not like '%/documentation/%'
     order by
       tp_timestamp desc;
   EOQ
@@ -707,6 +764,20 @@ query "unauthorized_package_access" {
         '127.0.0.1',
         '::1'
       )
+      -- Only include successful or redirected downloads
+      and status < 400
+      -- Exclude well-known package managers
+      and (
+        http_user_agent is null or
+        not (
+          lower(http_user_agent) like '%npm/%' or
+          lower(http_user_agent) like '%pip/%' or
+          lower(http_user_agent) like '%maven/%' or
+          lower(http_user_agent) like '%gradle/%' or
+          lower(http_user_agent) like '%nuget/%' or
+          lower(http_user_agent) like '%docker/%'
+        )
+      )
     order by
       tp_timestamp desc;
   EOQ
@@ -750,6 +821,17 @@ query "log_file_access_attempted" {
         or lower(request_uri) like '%/cloudwatch/%'
         or lower(request_uri) like '%/cloudtrail/%'
       )
+      and not (
+      lower(request_uri) like '%/logs/public/%' or 
+      lower(request_uri) like '%/logs/images/%' or
+      lower(request_uri) like '%/logs/css/%' or
+      lower(request_uri) like '%/logs/js/%' or
+      lower(request_uri) like '%/log/api/%' or
+      lower(request_uri) like '%/logs/ui/%' or
+      lower(request_uri) like '%/docs/%' or
+      lower(request_uri) like '%/examples/%' or
+      lower(request_uri) like '%/tutorials/%'
+    )
     order by
       tp_timestamp desc;
   EOQ
