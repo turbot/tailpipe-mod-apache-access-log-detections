@@ -15,7 +15,7 @@ benchmark "sql_injection_detections" {
     detection.sql_injection_time_based,
     detection.sql_injection_union_based,
     detection.sql_injection_user_agent_based,
-    detection.suspicious_automation_sqli,
+    detection.suspicious_automation_sql_injection,
   ]
 
   tags = merge(local.sql_injection_common_tags, {
@@ -318,21 +318,21 @@ query "sql_injection_user_agent_based" {
   EOQ
 }
 
-detection "suspicious_automation_sqli" {
+detection "suspicious_automation_sql_injection" {
   title           = "Suspicious Automation and SQL Injection Attempts"
   description     = "Detect potentially malicious automation combined with SQL injection patterns in requests, which indicates reconnaissance and probing for database vulnerabilities."
-  documentation   = file("./detections/docs/suspicious_automation_sqli.md")
+  documentation   = file("./detections/docs/suspicious_automation_sql_injection.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.suspicious_automation_sqli
+  query = query.suspicious_automation_sql_injection
 
   tags = merge(local.sql_injection_common_tags, {
     mitre_attack_ids = "TA0043:T1592,TA0009:T1190"
   })
 }
 
-query "suspicious_automation_sqli" {
+query "suspicious_automation_sql_injection" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}

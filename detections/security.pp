@@ -154,15 +154,17 @@ query "suspicious_user_agent_detected" {
 
 detection "xss_attempted" {
   title           = "Cross-Site Scripting Attempted"
-  description     = "Detect when a web server was targeted by cross-site scripting (XSS) attacks to check for potential client-side code injection that could lead to session hijacking or credential theft."
-  documentation   = file("./detections/docs/xss_attempted.md")
+  description     = "Detect Cross-Site Scripting (XSS) attempts in HTTP requests."
+  documentation   = file("./detections/docs/cross_site_scripting_attempted.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
   query = query.xss_attempted
 
-  tags = merge(local.security_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007"
+  tags = merge(local.apache_access_log_detections_common_tags, {
+    category = "Web Application Security",
+    mitre_attack_ids = "TA0009:T1059.007",
+    owasp_top_10 = "A03:2021-Injection"
   })
 }
 

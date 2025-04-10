@@ -11,7 +11,7 @@ benchmark "local_file_inclusion_detections" {
   type        = "detection"
   children = [
     detection.encoded_path_traversal_attack,
-    detection.header_based_lfi_attempt,
+    detection.header_based_local_file_inclusion_attempt,
     detection.hidden_file_access_attempt,
     detection.malicious_scanner,
     detection.os_file_access_attempt,
@@ -377,21 +377,21 @@ query "user_agent_attack" {
   EOQ
 }
 
-detection "header_based_lfi_attempt" {
-  title           = "Header-Based LFI Attempt"
+detection "header_based_local_file_inclusion_attempt" {
+  title           = "Header-Based Local File Inclusion Attempt"
   description     = "Detect when a web server received requests with LFI attack patterns in the User-Agent or other headers, which may indicate attempts to bypass basic WAF protections."
-  documentation   = file("./detections/docs/header_based_lfi_attempt.md")
+  documentation   = file("./detections/docs/header_based_local_file_inclusion_attempt.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.header_based_lfi_attempt
+  query = query.header_based_local_file_inclusion_attempt
 
   tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1190"
   })
 }
 
-query "header_based_lfi_attempt" {
+query "header_based_local_file_inclusion_attempt" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
