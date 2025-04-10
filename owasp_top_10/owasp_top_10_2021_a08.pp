@@ -1,15 +1,15 @@
 locals {
-  owasp_top_10_a08_2021_common_tags = merge(local.owasp_top_10_common_tags, {
-    owasp_top_10_version = "a08_2021"
+  owasp_top_10_2021_a08_common_tags = merge(local.owasp_top_10_common_tags, {
+    owasp_top_10_version = "2021_a08"
   })
 }
 
-benchmark "owasp_top_10_a08_2021" {
+benchmark "owasp_top_10_2021_a08" {
   title       = "A08:2021 - Software and Data Integrity Failures"
   description = "Software and data integrity failures relate to code and infrastructure that does not protect against integrity violations."
   type        = "detection"
   children = [
-    # References to security.pp detections have been removed
+    
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

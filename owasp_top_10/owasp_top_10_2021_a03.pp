@@ -1,0 +1,18 @@
+locals {
+  owasp_top_10_2021_a03_common_tags = merge(local.owasp_top_10_common_tags, {
+    owasp_top_10_version = "2021_a03"
+  })
+}
+
+benchmark "owasp_top_10_2021_a03" {
+  title       = "A03:2021 - Injection"
+  description = "Injection slides down to the third position. 94% of the applications were tested for some form of injection with a max incidence rate of 19%, an average incidence rate of 3%, and 274k occurrences."
+  type        = "detection"
+  children = [
+    
+  ]
+
+  tags = merge(local.owasp_top_10_common_tags, {
+    type = "Benchmark"
+  })
+}
