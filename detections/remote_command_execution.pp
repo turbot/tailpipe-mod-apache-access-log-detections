@@ -6,11 +6,11 @@ locals {
 
 benchmark "remote_command_execution_detections" {
   title       = "Remote Command Execution (RCE) Detections"
-  description = "This benchmark contains REC focused detections when scanning access logs."
+  description = "This benchmark contains RCE focused detections when scanning access logs."
   type        = "detection"
   children = [
-    detection.log4shell_remote_command_execution_attempt,
-    detection.spring4shell_remote_command_execution_attempt
+    detection.log4shell_vulnerability,
+    detection.spring4shell_vulnerability,
   ]
 
   tags = merge(local.remote_command_execution_common_tags, {
@@ -18,93 +18,98 @@ benchmark "remote_command_execution_detections" {
   })
 }
 
-detection "log4shell_remote_command_execution_attempt" {
-  title           = "Log4Shell (Log4j) Remote Command Execution Attempt"
-  description     = "Detects attempted exploitation of the Log4Shell vulnerability (CVE-2021-44228) in Log4j which can lead to remote code execution. These attacks typically use JNDI lookups through various protocols to load and execute malicious code."
-  documentation   = file("./detections/docs/log4shell_remote_command_execution_attempt.md")
+detection "log4shell_vulnerability" {
+  title           = "Log4Shell Vulnerability"
+  description     = "Detect Log4Shell (CVE-2021-44228) exploitation attempts that target the Java Log4j library vulnerability, allowing attackers to execute arbitrary commands."
+  documentation   = file("./detections/docs/log4shell_vulnerability.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.log4shell_remote_command_execution_attempt
+  query = query.log4shell_vulnerability
 
   tags = merge(local.remote_command_execution_common_tags, {
     mitre_attack_ids = "TA0002:T1059"
   })
 }
 
-query "log4shell_remote_command_execution_attempt" {
+query "log4shell_vulnerability" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
     from
       apache_access_log
     where
-      (
-        -- Basic Log4j patterns
-        (
-          -- Standard JNDI pattern
-          request_uri ilike '%$${jndi:%'
-          or http_user_agent ilike '%$${jndi:%'
-          -- Nested expressions - potential bypass technique
-          or request_uri ~ '\\$\\{[^\\}]{0,15}\\$\\{'
-          or http_user_agent ~ '\\$\\{[^\\}]{0,15}\\$\\{'
-          -- Looking for ctx (another common pattern)
-          or request_uri ~ '\\$\\{ctx:'
-          or http_user_agent ~ '\\$\\{ctx:'
-          -- HTML entity encoded variants
-          or request_uri ilike '%&dollar;{jndi:%'
-          or http_user_agent ilike '%&dollar;{jndi:%'
-          or request_uri ilike '%$&lbrace;jndi:%'
-          or http_user_agent ilike '%$&lbrace;jndi:%'
-          or request_uri ilike '%&dollar;&lbrace;jndi:%'
-          or http_user_agent ilike '%&dollar;&lbrace;jndi:%'
-          -- Common obfuscation techniques
-          or request_uri ~ '\\$\\{lower:\\$\\{upper:j\\}ndi'
-          or http_user_agent ~ '\\$\\{lower:\\$\\{upper:j\\}ndi'
-          or request_uri ~ '\\$\\{:-j\\}\\$\\{:-n\\}\\$\\{:-d\\}\\$\\{:-i\\}'
-          or http_user_agent ~ '\\$\\{:-j\\}\\$\\{:-n\\}\\$\\{:-d\\}\\$\\{:-i\\}'
-        )
+      request_uri is not null
+      and (
+        -- JNDI lookup patterns
+        request_uri ilike '%$${jndi:%'
+        or request_uri ilike '%$%7bjndi:%'
+        or request_uri ilike '%$${%7bjndi:%'
+        or request_uri ilike '%jndi://%'
+        
+        -- Common protocol exploits
+        or request_uri ilike '%jndi:ldap:%'
+        or request_uri ilike '%jndi:dns:%'
+        or request_uri ilike '%jndi:rmi:%'
+        or request_uri ilike '%jndi:http:%'
+        or request_uri ilike '%jndi:iiop:%'
+        or request_uri ilike '%jndi:corba:%'
+        
+        -- Base64 encoded variants
+        or request_uri ilike '%jTmRp%'
+        or request_uri ilike '%ak5kaQ%'
+        or request_uri ilike '%JE5ESQB%'
+        or request_uri ilike '%SnNkaQ%'
       )
     order by
-      tp_timestamp desc
+      tp_timestamp desc;
   EOQ
 }
 
-detection "spring4shell_remote_command_execution_attempt" {
-  title           = "Spring4Shell Remote Command Execution Attempt"
-  description     = "Detects attempted exploitation of the Spring4Shell vulnerability (CVE-2022-22965) in Spring Framework which can lead to remote code execution. These attacks typically use malicious class-loading payloads to bypass protections and execute arbitrary code."
-  documentation   = file("./detections/docs/spring4shell_remote_command_execution_attempt.md")
+detection "spring4shell_vulnerability" {
+  title           = "Spring4Shell Vulnerability"
+  description     = "Detect Spring4Shell (CVE-2022-22965) exploitation attempts that target Spring Framework's class injection vulnerability, allowing attackers to execute arbitrary commands."
+  documentation   = file("./detections/docs/spring4shell_vulnerability.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.spring4shell_remote_command_execution_attempt
+  query = query.spring4shell_vulnerability
 
   tags = merge(local.remote_command_execution_common_tags, {
     mitre_attack_ids = "TA0002:T1059"
   })
 }
 
-query "spring4shell_remote_command_execution_attempt" {
+query "spring4shell_vulnerability" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
     from
       apache_access_log
     where
-      (
-        -- Spring4Shell malicious class-loading payloads
-        request_uri ~ '(?:class\\.module\\.classLoader\\.resources\\.context\\.parent\\.pipeline|springframework\\.context\\.support\\.FileSystemXmlApplicationContext)'
-        or http_user_agent ~ '(?:class\\.module\\.classLoader\\.resources\\.context\\.parent\\.pipeline|springframework\\.context\\.support\\.FileSystemXmlApplicationContext)'
-        -- URL-encoded variants
-        or request_uri ~ '(?:class%2Emodule%2EclassLoader|springframework%2Econtext%2Esupport)'
-        or http_user_agent ~ '(?:class%2Emodule%2EclassLoader|springframework%2Econtext%2Esupport)'
-        -- Common Spring4Shell attack patterns
-        or request_uri ilike '%class.module.classLoader%'
-        or http_user_agent ilike '%class.module.classLoader%'
-        or request_uri ilike '%springframework.context.support%'
-        or http_user_agent ilike '%springframework.context.support%'
+      request_uri is not null
+      and (
+        -- Class pattern indicators
+        request_uri ilike '%class.module.classLoader%'
+        or request_uri ilike '%class.classLoader%'
+        or request_uri ilike '%ClassLoader%'
+        
+        -- Property access patterns
+        or request_uri ilike '%?class.module.classLoader.resources.context.parent.pipeline.first.pattern=%'
+        or request_uri ilike '%?class.module.classLoader.resources.context.parent.pipeline.first.suffix=%'
+        or request_uri ilike '%?class.module.classLoader.resources.context.parent.pipeline.first.directory=%'
+        or request_uri ilike '%?class.module.classLoader.resources.context.parent.pipeline.first.prefix=%'
+        or request_uri ilike '%?class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat=%'
+        
+        -- URL encoded variants
+        or request_uri ilike '%class%2Emodule%2EclassLoader%'
+        or request_uri ilike '%tomcatwar.jsp%'
+        
+        -- Common payloads
+        or request_uri ilike '%Pattern=%25%7Bc2%7Di%'
+        or request_uri ilike '%class.module.classLoader.DefaultAssertionStatus%'
       )
     order by
-      tp_timestamp desc
+      tp_timestamp desc;
   EOQ
 }

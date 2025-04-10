@@ -7,17 +7,16 @@ locals {
 
 benchmark "local_file_inclusion_detections" {
   title       = "Local File Inclusion (LFI) Detections"
-  description = "This benchmark contains detections for Local File Inclusion (LFI) attacks which could expose sensitive system or application files."
+  description = "This benchmark contains LFI focused detections when scanning access logs."
   type        = "detection"
   children = [
-    detection.encoded_path_traversal_attack,
-    detection.header_based_local_file_inclusion_attempt,
-    detection.hidden_file_access_attempt,
-    detection.malicious_scanner,
-    detection.os_file_access_attempt,
-    detection.path_traversal_attack,
-    detection.restricted_file_access_attempt,
-    detection.user_agent_attack,
+    detection.encoded_path_traversal,
+    detection.header_based_local_file_inclusion,
+    detection.hidden_file_access,
+    detection.os_file_access,
+    detection.path_traversal,
+    detection.restricted_file_access,
+    detection.user_agent_exploitation,
   ]
 
   tags = merge(local.local_file_inclusion_common_tags, {
@@ -25,59 +24,21 @@ benchmark "local_file_inclusion_detections" {
   })
 }
 
-detection "path_traversal_attack" {
-  title           = "Path Traversal Attack"
-  description     = "Detect when a web server received requests with path traversal patterns like '../' to check for attempts to access files outside the web root directory."
-  documentation   = file("./detections/docs/path_traversal_attack.md")
+detection "path_traversal" {
+  title           = "Path Traversal"
+  description     = "Detect directory traversal attacks using path sequences like '../' that attempt to access files outside the intended directory."
+  documentation   = file("./detections/docs/path_traversal.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.path_traversal_attack
+  query = query.path_traversal
 
   tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
 
-query "path_traversal_attack" {
-  sql = <<-EOQ
-    select
-      ${local.detection_sql_columns}
-    from
-      apache_access_log
-    where
-      (
-        request_uri is not null
-        and (
-          -- Basic path traversal patterns
-          request_uri ilike '%../%'
-          or request_uri ilike '%/../%'
-          or request_uri ilike '%/./%'
-          or request_uri ilike '%/.%'
-          or request_uri ilike '%\\..\\%'
-          or request_uri ilike '%\\.\\%'
-        )
-      )
-    order by
-      tp_timestamp desc;
-  EOQ
-}
-
-detection "encoded_path_traversal_attack" {
-  title           = "Encoded Path Traversal Attack"
-  description     = "Detect when a web server received requests with URL-encoded or otherwise obfuscated path traversal patterns to evade basic security controls."
-  documentation   = file("./detections/docs/encoded_path_traversal_attack.md")
-  severity        = "critical"
-  display_columns = local.detection_display_columns
-
-  query = query.encoded_path_traversal_attack
-
-  tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1083"
-  })
-}
-
-query "encoded_path_traversal_attack" {
+query "path_traversal" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -86,44 +47,96 @@ query "encoded_path_traversal_attack" {
     where
       request_uri is not null
       and (
-        -- URL-encoded variants (percent encoding)
-        request_uri ilike '%..%2f%'
-        or request_uri ilike '%..%2F%'
-        or request_uri ilike '%%2e%2e%2f%'
-        or request_uri ilike '%%2E%2E%2F%'
-        -- Double-encoded variants
-        or request_uri ilike '%..%252f%'
-        or request_uri ilike '%..%252F%'
-        or request_uri ilike '%%252e%252e%252f%'
-        or request_uri ilike '%%252E%252E%252F%'
-        -- Unicode/UTF-8 encoded variants
-        or request_uri ilike '%u002e%u002e%u002f%'
-        or request_uri ilike '%u002E%u002E%u002F%'
-        -- Backslash variants
+        -- Directory traversal sequences
+        request_uri ilike '%../%'
         or request_uri ilike '%..\\%'
-        or request_uri ilike '%..%5c%'
-        or request_uri ilike '%..%5C%'
+        or request_uri ilike '%/./%'
+        or request_uri ilike '%\\.\\%'
+        or request_uri ilike '%/.%'
+        or request_uri ilike '%\\\\%'
+        -- Most common exploits
+        or request_uri ilike '%../..%'
+        or request_uri ilike '%../../../%'
+        or request_uri ilike '%../../../../%'
+        or request_uri ilike '%..//%'
+        or request_uri ilike '%../../../../../../../../%'
+        -- Bypass techniques
+        or request_uri ilike '%..;/%'
+        or request_uri ilike '%..///%'
       )
     order by
       tp_timestamp desc;
   EOQ
 }
 
-detection "os_file_access_attempt" {
-  title           = "OS File Access Attempt"
-  description     = "Detect when a web server received requests attempting to access common operating system files to check for LFI vulnerabilities targeting system files."
-  documentation   = file("./detections/docs/os_file_access_attempt.md")
+detection "encoded_path_traversal" {
+  title           = "Encoded Path Traversal"
+  description     = "Detect directory traversal attacks using URL encoded or otherwise obfuscated path sequences to bypass security filters."
+  documentation   = file("./detections/docs/encoded_path_traversal.md")
+  severity        = "critical"
+  display_columns = local.detection_display_columns
+
+  query = query.encoded_path_traversal
+
+  tags = merge(local.local_file_inclusion_common_tags, {
+    mitre_attack_ids = "TA0001:T1083"
+  })
+}
+
+query "encoded_path_traversal" {
+  sql = <<-EOQ
+    select
+      ${local.detection_sql_columns}
+    from
+      apache_access_log
+    where
+      request_uri is not null
+      and (
+        -- URL encoded traversal sequences
+        request_uri ilike '%..%2f%'
+        or request_uri ilike '%..%2F%'
+        or request_uri ilike '%..%5c%'
+        or request_uri ilike '%..%5C%'
+        or request_uri ilike '%%2e%2e%2f%'
+        or request_uri ilike '%2e%2e/%'
+        or request_uri ilike '%2e%2e%2f%'
+        or request_uri ilike '%2e%2e%5c%'
+        -- Double URL encoding
+        or request_uri ilike '%%252e%252e%252f%'
+        or request_uri ilike '%%252e%252e%255c%'
+        -- Unicode/UTF-8 encoding
+        or request_uri ilike '%..%c0%af%'
+        or request_uri ilike '%..%e0%80%af%'
+        or request_uri ilike '%..%c1%1c%'
+        or request_uri ilike '%..%c1%9c%'
+        -- Overlong UTF-8 encoding
+        or request_uri ilike '%..%c0%2f%'
+        or request_uri ilike '%..%c0%5c%'
+        or request_uri ilike '%..%c0%80%af%'
+        -- Hex-encoded
+        or request_uri ilike '%2e2e2f%'
+        or request_uri ilike '%2e2e5c%'
+      )
+    order by
+      tp_timestamp desc;
+  EOQ
+}
+
+detection "os_file_access" {
+  title           = "OS File Access"
+  description     = "Detect attempts to access sensitive operating system files that might reveal confidential system information."
+  documentation   = file("./detections/docs/os_file_access.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.os_file_access_attempt
+  query = query.os_file_access
 
   tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
 
-query "os_file_access_attempt" {
+query "os_file_access" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -132,47 +145,55 @@ query "os_file_access_attempt" {
     where
       request_uri is not null
       and (
-        -- Unix/Linux system files
+        -- Unix/Linux sensitive files
         request_uri ilike '%/etc/passwd%'
         or request_uri ilike '%/etc/shadow%'
         or request_uri ilike '%/etc/hosts%'
+        or request_uri ilike '%/etc/fstab%'
         or request_uri ilike '%/etc/issue%'
-        or request_uri ilike '%/proc/self/%'
+        or request_uri ilike '%/etc/profile%'
+        or request_uri ilike '%/etc/ssh%'
         or request_uri ilike '%/proc/version%'
-        or request_uri ilike '%/var/log/%'
-        -- Windows system files
-        or request_uri ilike '%win.ini%'
-        or request_uri ilike '%system32%'
-        or request_uri ilike '%boot.ini%'
-        or request_uri ilike '%windows/system.ini%'
-        or request_uri ilike '%autoexec.bat%'
-        or request_uri ilike '%config.sys%'
-        -- Common web server files
+        or request_uri ilike '%/proc/self%'
+        or request_uri ilike '%/proc/cpuinfo%'
+        or request_uri ilike '%/var/log/auth.log%'
+        or request_uri ilike '%/var/log/secure%'
+        -- Windows sensitive files
+        or request_uri ilike '%c:\\windows\\win.ini%'
+        or request_uri ilike '%c:\\boot.ini%'
+        or request_uri ilike '%c:\\windows\\system32\\config%'
+        or request_uri ilike '%c:\\windows\\repair%'
+        or request_uri ilike '%c:\\windows\\debug\\netsetup.log%'
+        or request_uri ilike '%c:\\windows\\iis%log%'
+        or request_uri ilike '%c:\\sysprep.inf%'
+        or request_uri ilike '%c:\\sysprep\\sysprep.xml%'
+        -- Web server files
+        or request_uri ilike '%/var/log/apache%'
+        or request_uri ilike '%/var/log/httpd%'
         or request_uri ilike '%/usr/local/apache%'
-        or request_uri ilike '%/usr/local/etc/httpd%'
-        or request_uri ilike '%/var/www/%'
-        or request_uri ilike '%/var/apache%'
+        or request_uri ilike '%/usr/local/nginx%'
+        or request_uri ilike '%/var/log/nginx%'
       )
     order by
       tp_timestamp desc;
   EOQ
 }
 
-detection "restricted_file_access_attempt" {
-  title           = "Restricted File Access Attempt"
-  description     = "Detect when a web server received requests for restricted files such as application source code, configuration files, or internal application data."
-  documentation   = file("./detections/docs/restricted_file_access_attempt.md")
+detection "restricted_file_access" {
+  title           = "Restricted File Access"
+  description     = "Detect attempts to access restricted application files, such as configuration files, that might reveal sensitive application data."
+  documentation   = file("./detections/docs/restricted_file_access.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.restricted_file_access_attempt
+  query = query.restricted_file_access
 
   tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
 
-query "restricted_file_access_attempt" {
+query "restricted_file_access" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -181,50 +202,58 @@ query "restricted_file_access_attempt" {
     where
       request_uri is not null
       and (
-        -- Source code/config files
-        request_uri ilike '%.conf%'
-        or request_uri ilike '%.config%'
-        or request_uri ilike '%.ini%'
+        -- Common application config files
+        request_uri ilike '%/config.php%'
+        or request_uri ilike '%/configuration.php%'
+        or request_uri ilike '%/db.php%'
+        or request_uri ilike '%/database.php%'
+        or request_uri ilike '%/settings.php%'
+        or request_uri ilike '%/conf.php%'
+        or request_uri ilike '%/wp-config.php%'
+        or request_uri ilike '%/config.xml%'
+        or request_uri ilike '%/app.config%'
+        or request_uri ilike '%/appsettings.json%'
+        or request_uri ilike '%/config.yml%'
+        or request_uri ilike '%/config.yaml%'
+        or request_uri ilike '%/.env%'
+        or request_uri ilike '%/.htaccess%'
+        or request_uri ilike '%/.svn/%'
+        or request_uri ilike '%/.git/%'
+        -- Popular application source files
+        or request_uri ilike '%/web.config%'
+        or request_uri ilike '%/php.ini%'
+        or request_uri ilike '%/.htpasswd%'
         or request_uri ilike '%.inc%'
-        or request_uri ilike '%.sql%'
+        -- Temporary or backup files that may contain sensitive data
+        or request_uri ilike '%~%'
         or request_uri ilike '%.bak%'
-        or request_uri ilike '%.old%'
         or request_uri ilike '%.backup%'
-        -- Application files
-        or request_uri ilike '%.php.swp%'
-        or request_uri ilike '%.php~%'
-        or request_uri ilike '%.jsp.old%'
-        or request_uri ilike '%.jsp~%'
-        or request_uri ilike '%.asp.bak%'
-        or request_uri ilike '%.aspx~%'
-        or request_uri ilike '%/WEB-INF/%'
-        or request_uri ilike '%/META-INF/%'
-        -- Database files
-        or request_uri ilike '%.db%'
-        or request_uri ilike '%.sqlite%'
-        or request_uri ilike '%.mdb%'
-        or request_uri ilike '%.accdb%'
+        or request_uri ilike '%.old%'
+        or request_uri ilike '%.orig%'
+        or request_uri ilike '%.tmp%'
+        or request_uri ilike '%.temp%'
+        or request_uri ilike '%.swp%'
       )
     order by
       tp_timestamp desc;
   EOQ
 }
 
-detection "hidden_file_access_attempt" {
-  title           = "Hidden File Access Attempt"
-  description     = "Detect attempts to access hidden files and directories, including version control repositories and sensitive configuration files."
-  documentation   = file("./detections/docs/hidden_file_access_attempt.md")
+detection "hidden_file_access" {
+  title           = "Hidden File Access"
+  description     = "Detect attempts to access hidden files and directories, which may contain sensitive configuration data or credentials."
+  documentation   = file("./detections/docs/hidden_file_access.md")
   severity        = "medium"
   display_columns = local.detection_display_columns
 
-  query = query.hidden_file_access_attempt
+  query = query.hidden_file_access
 
   tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1083"
   })
 }
 
-query "hidden_file_access_attempt" {
+query "hidden_file_access" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -233,10 +262,12 @@ query "hidden_file_access_attempt" {
     where
       request_uri is not null
       and (
-        -- Hidden files and directories
+        -- Common hidden files and directories
         request_uri ilike '%/.git/%'
         or request_uri ilike '%/.svn/%'
         or request_uri ilike '%/.DS_Store%'
+        or request_uri ilike '%/.htpasswd%'
+        or request_uri ilike '%/.npmrc%'
         or request_uri ilike '%/.env%'
         or request_uri ilike '%/.aws/%'
         or request_uri ilike '%/.ssh/%'
@@ -257,80 +288,21 @@ query "hidden_file_access_attempt" {
   EOQ
 }
 
-detection "malicious_scanner" {
-  title           = "Malicious Scanner or Attack Tool"
-  description     = "Detect when known penetration testing or vulnerability scanning tools are used against the web server. These tools are often used for reconnaissance before targeted attacks."
-  documentation   = file("./detections/docs/malicious_scanner.md")
-  severity        = "high"
-  display_columns = local.detection_display_columns
-
-  query = query.malicious_scanner
-
-  tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0043:T1592"
-  })
-}
-
-query "malicious_scanner" {
-  sql = <<-EOQ
-    select
-      ${local.detection_sql_columns}
-    from
-      apache_access_log
-    where
-      http_user_agent is not null
-      and (
-        -- SQLi tools
-        http_user_agent ilike '%sqlmap%'
-        or http_user_agent ilike '%sqlninja%'
-        or http_user_agent ilike '%havij%'
-        or http_user_agent ilike '%sql injection%'
-        or http_user_agent ilike '%sql power injector%'
-        -- LFI/scanning tools
-        or http_user_agent ilike '%nikto%'
-        or http_user_agent ilike '%dirbuster%'
-        or http_user_agent ilike '%gobuster%'
-        or http_user_agent ilike '%dotdotpwn%'
-        or http_user_agent ilike '%w3af%'
-        or http_user_agent ilike '%nessus%'
-        or http_user_agent ilike '%acunetix%'
-        or http_user_agent ilike '%burpsuite%'
-        or http_user_agent ilike '%burp suite%'
-        or http_user_agent ilike '%nmap%'
-        or http_user_agent ilike '%ZAP/%'
-        or http_user_agent ilike '%OWASP ZAP%'
-        or http_user_agent ilike '%Wfuzz/%'
-        or http_user_agent ilike '%masscan%'
-        -- Generic attack tools
-        or http_user_agent ilike '%metasploit%'
-        or http_user_agent ilike '%hydra%'
-        or http_user_agent ilike '%wget/%'
-        or http_user_agent ilike '%curl/%'
-        or http_user_agent = 'python-requests'
-        or http_user_agent = 'python-urllib'
-        or http_user_agent = ''
-        or http_user_agent is null
-      )
-    order by
-      tp_timestamp desc;
-  EOQ
-}
-
-detection "user_agent_attack" {
-  title           = "User Agent Attack"
+detection "user_agent_exploitation" {
+  title           = "User Agent Exploitation"
   description     = "Detect when a web server received requests with attack patterns in the User-Agent header. This can indicate attempts to exploit vulnerable software or bypass security controls."
-  documentation   = file("./detections/docs/user_agent_attack.md")
+  documentation   = file("./detections/docs/user_agent_exploitation.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.user_agent_attack
+  query = query.user_agent_exploitation
 
   tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1190"
   })
 }
 
-query "user_agent_attack" {
+query "user_agent_exploitation" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -377,21 +349,21 @@ query "user_agent_attack" {
   EOQ
 }
 
-detection "header_based_local_file_inclusion_attempt" {
-  title           = "Header-Based Local File Inclusion Attempt"
+detection "header_based_local_file_inclusion" {
+  title           = "Header-Based Local File Inclusion"
   description     = "Detect when a web server received requests with LFI attack patterns in the User-Agent or other headers, which may indicate attempts to bypass basic WAF protections."
-  documentation   = file("./detections/docs/header_based_local_file_inclusion_attempt.md")
+  documentation   = file("./detections/docs/header_based_local_file_inclusion.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.header_based_local_file_inclusion_attempt
+  query = query.header_based_local_file_inclusion
 
   tags = merge(local.local_file_inclusion_common_tags, {
     mitre_attack_ids = "TA0001:T1190"
   })
 }
 
-query "header_based_local_file_inclusion_attempt" {
+query "header_based_local_file_inclusion" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}

@@ -1,6 +1,6 @@
 ## Overview
 
-Detect basic SQL injection attempts targeting common SQL keywords and syntax patterns. Basic SQL injection exploits insufficient input validation to inject malicious SQL statements by inserting SQL keywords and operators. These attacks target fundamental SQL syntax elements like SELECT, INSERT, UPDATE, DELETE statements to manipulate database queries, potentially leading to unauthorized data access, data theft, or complete database compromise.
+Detect common SQL injection patterns targeting typical SQL keywords and syntax patterns. This detection identifies frequently used SQL injection techniques that might indicate an attempt to manipulate database queries, focusing on the most widespread syntax elements attackers use to compromise database security.
 
 This detection identifies common SQL command patterns (SELECT, INSERT, DELETE, UPDATE), basic SQL injection techniques (OR 1=1), and SQL comment markers used to bypass security controls.
 

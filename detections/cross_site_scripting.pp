@@ -9,12 +9,12 @@ benchmark "cross_site_scripting_detections" {
   description = "This benchmark contains cross-site scripting (XSS) focused detections when scanning access logs."
   type        = "detection"
   children = [
-    detection.cross_site_scripting_basic_attack,
     detection.cross_site_scripting_angular_template,
     detection.cross_site_scripting_attribute_injection,
+    detection.cross_site_scripting_common_patterns,
     detection.cross_site_scripting_dom_based,
-    detection.cross_site_scripting_encoded_attack,
-    detection.cross_site_scripting_event_handler,
+    detection.cross_site_scripting_encoding,
+    detection.cross_site_scripting_event_handlers,
     detection.cross_site_scripting_html_injection,
     detection.cross_site_scripting_javascript_methods,
     detection.cross_site_scripting_javascript_uri,
@@ -26,14 +26,14 @@ benchmark "cross_site_scripting_detections" {
   })
 }
 
-detection "cross_site_scripting_basic_attack" {
-  title           = "Cross-Site Scripting Basic Attack"
+detection "cross_site_scripting_common_patterns" {
+  title           = "Cross-Site Scripting Common Patterns"
   description     = "Detect basic Cross-Site Scripting (XSS) attack patterns in HTTP requests and User-Agent headers."
-  documentation   = file("./detections/docs/cross_site_scripting_basic_attack.md")
+  documentation   = file("./detections/docs/cross_site_scripting_common_patterns.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.cross_site_scripting_basic_attack
+  query = query.cross_site_scripting_common_patterns
 
   tags = merge(local.cross_site_scripting_common_tags, {
     mitre_attack_ids = "TA0009:T1059.007",
@@ -41,7 +41,7 @@ detection "cross_site_scripting_basic_attack" {
   })
 }
 
-query "cross_site_scripting_basic_attack" {
+query "cross_site_scripting_common_patterns" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -93,7 +93,7 @@ query "cross_site_scripting_basic_attack" {
 }
 
 detection "cross_site_scripting_script_tag" {
-  title           = "XSS Script Tag Vector"
+  title           = "Cross-Site Scripting Script Tag"
   description     = "Detect Cross-Site Scripting attacks using script tags to execute arbitrary JavaScript code in requests and User-Agent headers."
   documentation   = file("./detections/docs/cross_site_scripting_script_tag.md")
   severity        = "critical"
@@ -205,7 +205,7 @@ query "cross_site_scripting_attribute_injection" {
 }
 
 detection "cross_site_scripting_javascript_uri" {
-  title           = "Cross-Site Scripting JavaScript URI Vector"
+  title           = "Cross-Site Scripting JavaScript URI"
   description     = "Detect Cross-Site Scripting attacks using javascript: URI schemes in attributes like href or src in requests and User-Agent headers."
   documentation   = file("./detections/docs/cross_site_scripting_javascript_uri.md")
   severity        = "high"
@@ -256,14 +256,14 @@ query "cross_site_scripting_javascript_uri" {
   EOQ
 }
 
-detection "cross_site_scripting_event_handler" {
-  title           = "Cross-Site Scripting Event Handler Attack"
+detection "cross_site_scripting_event_handlers" {
+  title           = "Cross-Site Scripting Event Handlers"
   description     = "Detect Cross-Site Scripting attacks using HTML event handlers like onload, onerror, and onclick in requests and User-Agent headers."
-  documentation   = file("./detections/docs/cross_site_scripting_event_handler.md")
+  documentation   = file("./detections/docs/cross_site_scripting_event_handlers.md")
   severity        = "high"
   display_columns = local.detection_display_columns
 
-  query = query.cross_site_scripting_event_handler
+  query = query.cross_site_scripting_event_handlers
 
   tags = merge(local.cross_site_scripting_common_tags, {
     mitre_attack_ids = "TA0009:T1059.007",
@@ -271,7 +271,7 @@ detection "cross_site_scripting_event_handler" {
   })
 }
 
-query "cross_site_scripting_event_handler" {
+query "cross_site_scripting_event_handlers" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -424,14 +424,14 @@ query "cross_site_scripting_javascript_methods" {
   EOQ
 }
 
-detection "cross_site_scripting_encoded_attack" {
-  title           = "Cross-Site Scripting Encoded Attack"
+detection "cross_site_scripting_encoding" {
+  title           = "Cross-Site Scripting Encoding"
   description     = "Detect Cross-Site Scripting attacks using various encoding techniques to bypass filters in requests and User-Agent headers."
-  documentation   = file("./detections/docs/cross_site_scripting_encoded_attack.md")
+  documentation   = file("./detections/docs/cross_site_scripting_encoding.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.cross_site_scripting_encoded_attack
+  query = query.cross_site_scripting_encoding
 
   tags = merge(local.cross_site_scripting_common_tags, {
     mitre_attack_ids = "TA0009:T1059.007",
@@ -439,7 +439,7 @@ detection "cross_site_scripting_encoded_attack" {
   })
 }
 
-query "cross_site_scripting_encoded_attack" {
+query "cross_site_scripting_encoding" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -483,7 +483,7 @@ query "cross_site_scripting_encoded_attack" {
 }
 
 detection "cross_site_scripting_dom_based" {
-  title           = "DOM-Based Cross-Site Scripting Attack"
+  title           = "Cross-Site Scripting DOM Based"
   description     = "Detect potential DOM-based Cross-Site Scripting attacks targeting JavaScript DOM manipulation in requests and User-Agent headers."
   documentation   = file("./detections/docs/cross_site_scripting_dom_based.md")
   severity        = "high"
@@ -541,7 +541,7 @@ query "cross_site_scripting_dom_based" {
 }
 
 detection "cross_site_scripting_angular_template" {
-  title           = "AngularJS Template Injection"
+  title           = "Cross-Site Scripting AngularJS Template"
   description     = "Detect potential AngularJS template injection attacks that can lead to Cross-Site Scripting in requests and User-Agent headers."
   documentation   = file("./detections/docs/cross_site_scripting_angular_template.md")
   severity        = "critical"

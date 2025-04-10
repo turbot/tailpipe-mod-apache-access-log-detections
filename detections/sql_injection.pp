@@ -9,13 +9,12 @@ benchmark "sql_injection_detections" {
   description = "This benchmark contains SQLi focused detections when scanning access logs."
   type        = "detection"
   children = [
-    detection.sql_injection_basic_attack,
     detection.sql_injection_blind_based,
+    detection.sql_injection_common_patterns,
     detection.sql_injection_error_based,
     detection.sql_injection_time_based,
     detection.sql_injection_union_based,
     detection.sql_injection_user_agent_based,
-    detection.suspicious_automation_sql_injection,
   ]
 
   tags = merge(local.sql_injection_common_tags, {
@@ -23,21 +22,21 @@ benchmark "sql_injection_detections" {
   })
 }
 
-detection "sql_injection_basic_attack" {
-  title           = "SQL Injection Basic Attack"
+detection "sql_injection_common_patterns" {
+  title           = "SQL Injection Common Patterns"
   description     = "Detect basic SQL injection attempts targeting common SQL keywords and syntax patterns that might indicate an attempt to manipulate database queries."
-  documentation   = file("./detections/docs/sql_injection_basic_attack.md")
+  documentation   = file("./detections/docs/sql_injection_common_patterns.md")
   severity        = "critical"
   display_columns = local.detection_display_columns
 
-  query = query.sql_injection_basic_attack
+  query = query.sql_injection_common_patterns
 
   tags = merge(local.sql_injection_common_tags, {
     mitre_attack_ids = "TA0009:T1190"
   })
 }
 
-query "sql_injection_basic_attack" {
+query "sql_injection_common_patterns" {
   sql = <<-EOQ
     select
       ${local.detection_sql_columns}
@@ -76,7 +75,7 @@ query "sql_injection_basic_attack" {
 }
 
 detection "sql_injection_union_based" {
-  title           = "SQL Injection Union Based Attack"
+  title           = "SQL Injection Union Based"
   description     = "Detect UNION-based SQL injection attacks that attempt to join results from another query to the original query's results."
   documentation   = file("./detections/docs/sql_injection_union_based.md")
   severity        = "critical"
@@ -121,7 +120,7 @@ query "sql_injection_union_based" {
 }
 
 detection "sql_injection_blind_based" {
-  title           = "SQL Injection Blind Based Attack"
+  title           = "SQL Injection Blind Based"
   description     = "Detect blind SQL injection attacks that attempt to extract information from the database using boolean conditions or time delays."
   documentation   = file("./detections/docs/sql_injection_blind_based.md")
   severity        = "critical"
@@ -169,7 +168,7 @@ query "sql_injection_blind_based" {
 }
 
 detection "sql_injection_error_based" {
-  title           = "SQL Injection Error Based Attack"
+  title           = "SQL Injection Error Based"
   description     = "Detect error-based SQL injection attacks that attempt to extract information from database error messages."
   documentation   = file("./detections/docs/sql_injection_error_based.md")
   severity        = "critical"
@@ -219,7 +218,7 @@ query "sql_injection_error_based" {
 }
 
 detection "sql_injection_time_based" {
-  title           = "SQL Injection Time Based Attack"
+  title           = "SQL Injection Time Based"
   description     = "Detect time-based SQL injection attacks that attempt to extract information by causing delays in database response times."
   documentation   = file("./detections/docs/sql_injection_time_based.md")
   severity        = "critical"
@@ -264,7 +263,7 @@ query "sql_injection_time_based" {
 }
 
 detection "sql_injection_user_agent_based" {
-  title           = "SQL Injection User Agent Based Attack"
+  title           = "SQL Injection User Agent Based"
   description     = "Detect SQL injection attacks that use the User-Agent header rather than URL parameters to bypass WAF protections or input filtering."
   documentation   = file("./detections/docs/sql_injection_user_agent_based.md")
   severity        = "critical"
@@ -312,58 +311,6 @@ query "sql_injection_user_agent_based" {
         or http_user_agent ilike '%benchmark(%'
         or http_user_agent ilike '%pg_sleep(%'
         or http_user_agent ilike '%waitfor%delay%'
-      )
-    order by
-      tp_timestamp desc;
-  EOQ
-}
-
-detection "suspicious_automation_sql_injection" {
-  title           = "Suspicious Automation and SQL Injection Attempts"
-  description     = "Detect potentially malicious automation combined with SQL injection patterns in requests, which indicates reconnaissance and probing for database vulnerabilities."
-  documentation   = file("./detections/docs/suspicious_automation_sql_injection.md")
-  severity        = "high"
-  display_columns = local.detection_display_columns
-
-  query = query.suspicious_automation_sql_injection
-
-  tags = merge(local.sql_injection_common_tags, {
-    mitre_attack_ids = "TA0043:T1592,TA0009:T1190"
-  })
-}
-
-query "suspicious_automation_sql_injection" {
-  sql = <<-EOQ
-    select
-      ${local.detection_sql_columns}
-    from
-      apache_access_log
-    where
-      -- SQL injection patterns in the request URI
-      (
-        request_uri ilike '%union%select%'
-        or request_uri ilike '%select%from%'
-        or request_uri ilike '%1=1%'
-        or request_uri ilike '%information_schema%'
-      )
-      -- Combined with suspicious user agents
-      and (
-        -- Known SQLi tools
-        http_user_agent ilike '%sqlmap%'
-        or http_user_agent ilike '%havij%'
-        or http_user_agent ilike '%sqlninja%'
-        -- Generic automation tools often used for SQLi
-        or http_user_agent ilike '%python%'
-        or http_user_agent ilike '%curl/%'
-        or http_user_agent ilike '%wget/%'
-        or http_user_agent ilike '%go-http-client%'
-        or http_user_agent ilike '%ruby%'
-        or http_user_agent ilike '%perl%'
-        -- Missing or highly suspicious user agents
-        or http_user_agent = ''
-        or http_user_agent is null
-        or http_user_agent = 'Mozilla'
-        or http_user_agent ilike '%vulnerable%'
       )
     order by
       tp_timestamp desc;
