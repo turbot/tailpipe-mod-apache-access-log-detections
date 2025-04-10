@@ -1,6 +1,6 @@
 locals {
   local_file_inclusion_common_tags = merge(local.apache_access_log_detections_common_tags, {
-    category = "Security"
+    category    = "Security"
     attack_type = "Local File Inclusion"
   })
 }
@@ -34,7 +34,8 @@ detection "path_traversal" {
   query = query.path_traversal
 
   tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1083"
+    mitre_attack_ids = "TA0007:T1083",
+    owasp_top_10     = "A01:2021-Broken Access Control"
   })
 }
 
@@ -79,7 +80,8 @@ detection "encoded_path_traversal" {
   query = query.encoded_path_traversal
 
   tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1083"
+    mitre_attack_ids = "TA0007:T1083",
+    owasp_top_10     = "A01:2021-Broken Access Control"
   })
 }
 
@@ -132,7 +134,8 @@ detection "os_file_access" {
   query = query.os_file_access
 
   tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1083"
+    mitre_attack_ids = "TA0007:T1083",
+    owasp_top_10     = "A01:2021-Broken Access Control"
   })
 }
 
@@ -189,7 +192,8 @@ detection "restricted_file_access" {
   query = query.restricted_file_access
 
   tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1083"
+    mitre_attack_ids = "TA0007:T1083",
+    owasp_top_10     = "A01:2021-Broken Access Control"
   })
 }
 
@@ -249,7 +253,8 @@ detection "hidden_file_access" {
   query = query.hidden_file_access
 
   tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1083"
+    mitre_attack_ids = "TA0007:T1083",
+    owasp_top_10     = "A01:2021-Broken Access Control"
   })
 }
 
@@ -298,7 +303,8 @@ detection "user_agent_exploitation" {
   query = query.user_agent_exploitation
 
   tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A01:2021-Broken Access Control"
   })
 }
 
@@ -359,7 +365,8 @@ detection "header_based_local_file_inclusion" {
   query = query.header_based_local_file_inclusion
 
   tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A01:2021-Broken Access Control"
   })
 }
 

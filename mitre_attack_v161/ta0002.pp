@@ -9,7 +9,7 @@ benchmark "mitre_attack_v161_ta0002" {
   type          = "detection"
   documentation = file("./mitre_attack_v161/docs/ta0002.md")
   children = [
-    
+    benchmark.mitre_attack_v161_ta0002_t1059
   ]
 
   tags = merge(local.mitre_attack_v161_ta0002_common_tags, {

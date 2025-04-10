@@ -32,7 +32,8 @@ detection "sql_injection_common_patterns" {
   query = query.sql_injection_common_patterns
 
   tags = merge(local.sql_injection_common_tags, {
-    mitre_attack_ids = "TA0009:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -84,7 +85,8 @@ detection "sql_injection_union_based" {
   query = query.sql_injection_union_based
 
   tags = merge(local.sql_injection_common_tags, {
-    mitre_attack_ids = "TA0009:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -129,7 +131,8 @@ detection "sql_injection_blind_based" {
   query = query.sql_injection_blind_based
 
   tags = merge(local.sql_injection_common_tags, {
-    mitre_attack_ids = "TA0009:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -177,7 +180,8 @@ detection "sql_injection_error_based" {
   query = query.sql_injection_error_based
 
   tags = merge(local.sql_injection_common_tags, {
-    mitre_attack_ids = "TA0009:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -227,7 +231,8 @@ detection "sql_injection_time_based" {
   query = query.sql_injection_time_based
 
   tags = merge(local.sql_injection_common_tags, {
-    mitre_attack_ids = "TA0009:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -272,7 +277,8 @@ detection "sql_injection_user_agent_based" {
   query = query.sql_injection_user_agent_based
 
   tags = merge(local.sql_injection_common_tags, {
-    mitre_attack_ids = "TA0009:T1190"
+    mitre_attack_ids = "TA0001:T1190",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 

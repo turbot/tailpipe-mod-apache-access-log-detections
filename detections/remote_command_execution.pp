@@ -28,7 +28,8 @@ detection "log4shell_vulnerability" {
   query = query.log4shell_vulnerability
 
   tags = merge(local.remote_command_execution_common_tags, {
-    mitre_attack_ids = "TA0002:T1059"
+    mitre_attack_ids = "TA0002:T1059",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -76,7 +77,8 @@ detection "spring4shell_vulnerability" {
   query = query.spring4shell_vulnerability
 
   tags = merge(local.remote_command_execution_common_tags, {
-    mitre_attack_ids = "TA0002:T1059"
+    mitre_attack_ids = "TA0002:T1059",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 

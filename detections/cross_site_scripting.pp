@@ -36,8 +36,8 @@ detection "cross_site_scripting_common_patterns" {
   query = query.cross_site_scripting_common_patterns
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -102,8 +102,8 @@ detection "cross_site_scripting_script_tag" {
   query = query.cross_site_scripting_script_tag
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -156,8 +156,8 @@ detection "cross_site_scripting_attribute_injection" {
   query = query.cross_site_scripting_attribute_injection
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -214,8 +214,8 @@ detection "cross_site_scripting_javascript_uri" {
   query = query.cross_site_scripting_javascript_uri
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -266,8 +266,8 @@ detection "cross_site_scripting_event_handlers" {
   query = query.cross_site_scripting_event_handlers
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -324,8 +324,8 @@ detection "cross_site_scripting_html_injection" {
   query = query.cross_site_scripting_html_injection
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -380,8 +380,8 @@ detection "cross_site_scripting_javascript_methods" {
   query = query.cross_site_scripting_javascript_methods
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -434,8 +434,8 @@ detection "cross_site_scripting_encoding" {
   query = query.cross_site_scripting_encoding
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -492,8 +492,8 @@ detection "cross_site_scripting_dom_based" {
   query = query.cross_site_scripting_dom_based
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
@@ -550,8 +550,8 @@ detection "cross_site_scripting_angular_template" {
   query = query.cross_site_scripting_angular_template
 
   tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0009:T1059.007",
-    owasp_top_10 = "A03:2021-Injection"
+    mitre_attack_ids = "TA0002:T1059.007",
+    owasp_top_10     = "A03:2021-Injection"
   })
 }
 
