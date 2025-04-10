@@ -6,11 +6,10 @@ locals {
 
 benchmark "owasp_top_10_a02_2021" {
   title       = "A02:2021 - Cryptographic Failures"
-  description = "The first thing is to determine the protection needs of data in transit and at rest. For example, passwords, credit card numbers, health records, personal information, and business secrets require extra protection, mainly if that data falls under privacy laws, e.g., EU's General Data Protection Regulation (GDPR), or regulations, e.g., financial data protection such as PCI Data Security Standard (PCI DSS)."
+  description = "Failures related to cryptography that often lead to exposure of sensitive data or system compromise."
   type        = "detection"
   children = [
-    detection.cleartext_credentials_transmitted,
-    detection.weak_ssl_tls_detected
+    # References to security.pp detections have been removed
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

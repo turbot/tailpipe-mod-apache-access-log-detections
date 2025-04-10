@@ -6,10 +6,10 @@ locals {
 
 benchmark "owasp_top_10_a07_2021" {
   title       = "A07:2021 - Identification and Authentication Failures"
-  description = "Confirmation of the user's identity, authentication, and session management is critical to protect against authentication-related attacks."
+  description = "Weaknesses in authentication can allow attackers to assume identities of other users or bypass authentication entirely."
   type        = "detection"
   children = [
-    detection.suspicious_user_agent_detected
+    # References to security.pp detections have been removed
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

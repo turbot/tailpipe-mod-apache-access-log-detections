@@ -9,8 +9,7 @@ benchmark "owasp_top_10_a08_2021" {
   description = "Software and data integrity failures relate to code and infrastructure that does not protect against integrity violations."
   type        = "detection"
   children = [
-    detection.insecure_deserialization_attempted,
-    detection.unauthorized_package_access
+    # References to security.pp detections have been removed
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {

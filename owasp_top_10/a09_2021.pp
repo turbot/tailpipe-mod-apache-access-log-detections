@@ -6,11 +6,10 @@ locals {
 
 benchmark "owasp_top_10_a09_2021" {
   title       = "A09:2021 - Security Logging and Monitoring Failures"
-  description = "Security logging and monitoring failures relate to code and infrastructure that does not protect against integrity violations."
+  description = "Insufficient logging and monitoring, coupled with missing or ineffective integration with incident response, allows attackers to operate undetected."
   type        = "detection"
   children = [
-    detection.log_file_access_attempted,
-    detection.security_log_manipulation_attempted
+    # References to security.pp detections have been removed
   ]
 
   tags = merge(local.owasp_top_10_common_tags, {
