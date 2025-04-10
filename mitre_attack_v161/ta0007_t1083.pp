@@ -10,7 +10,7 @@ benchmark "mitre_attack_v161_ta0007_t1083" {
   documentation = file("./mitre_attack_v161/docs/ta0007_t1083.md")
   children = [
     detection.encoded_path_traversal,
-    detection.hidden_file_access
+    detection.hidden_file_access,
     detection.os_file_access,
     detection.path_traversal,
     detection.restricted_file_access,
