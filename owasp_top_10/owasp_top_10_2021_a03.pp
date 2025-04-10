@@ -1,5 +1,5 @@
 locals {
-  owasp_top_10_2021_a03_common_tags = merge(local.owasp_top_10_common_tags, {
+  owasp_top_10_2021_a03_common_tags = merge(local.owasp_top_10_2021_common_tags, {
     owasp_top_10_version = "2021_a03"
   })
 }
@@ -34,7 +34,7 @@ benchmark "owasp_top_10_2021_a03" {
     detection.spring4shell_vulnerability
   ]
 
-  tags = merge(local.owasp_top_10_common_tags, {
+  tags = merge(local.owasp_top_10_2021_a03_common_tags, {
     type = "Benchmark"
   })
 }

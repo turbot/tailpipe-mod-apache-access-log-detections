@@ -11,7 +11,6 @@ benchmark "mitre_attack_v161_ta0001_t1190" {
   children = [
     # Local File Inclusion exploits
     detection.header_based_local_file_inclusion,
-    detection.user_agent_exploitation,
 
     # SQL Injection exploits
     detection.sql_injection_blind_based,

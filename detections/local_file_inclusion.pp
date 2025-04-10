@@ -16,7 +16,6 @@ benchmark "local_file_inclusion_detections" {
     detection.os_file_access,
     detection.path_traversal,
     detection.restricted_file_access,
-    detection.user_agent_exploitation,
   ]
 
   tags = merge(local.local_file_inclusion_common_tags, {
@@ -287,68 +286,6 @@ query "hidden_file_access" {
         or request_uri ilike '%/Dockerfile%'
         or request_uri ilike '%/kubernetes/%'
         or request_uri ilike '%/kubeconfig%'
-      )
-    order by
-      tp_timestamp desc;
-  EOQ
-}
-
-detection "user_agent_exploitation" {
-  title           = "User Agent Exploitation"
-  description     = "Detect when a web server received requests with attack patterns in the User-Agent header. This can indicate attempts to exploit vulnerable software or bypass security controls."
-  documentation   = file("./detections/docs/user_agent_exploitation.md")
-  severity        = "high"
-  display_columns = local.detection_display_columns
-
-  query = query.user_agent_exploitation
-
-  tags = merge(local.local_file_inclusion_common_tags, {
-    mitre_attack_ids = "TA0001:T1190",
-    owasp_top_10     = "A01:2021-Broken Access Control"
-  })
-}
-
-query "user_agent_exploitation" {
-  sql = <<-EOQ
-    select
-      ${local.detection_sql_columns}
-    from
-      apache_access_log
-    where
-      http_user_agent is not null
-      and (
-        -- SQL Injection patterns
-        http_user_agent ilike '%union%select%'
-        or http_user_agent ilike '%select%from%'
-        or http_user_agent ilike '%insert%into%'
-        or http_user_agent ilike '%delete%from%'
-        or http_user_agent ilike '%update%set%'
-        or http_user_agent ilike '%drop%table%'
-        or http_user_agent ilike '%1=1%'
-        or http_user_agent ilike '%1%=%1%'
-        or http_user_agent ilike '%sleep(%'
-        or http_user_agent ilike '%benchmark(%'
-        -- LFI patterns
-        or http_user_agent ilike '%../%'
-        or http_user_agent ilike '%/../%'
-        or http_user_agent ilike '%/./%'
-        or http_user_agent ilike '%\\..\\%'
-        or http_user_agent ilike '%\\.\\%'
-        or http_user_agent ilike '%/etc/passwd%'
-        or http_user_agent ilike '%/etc/shadow%'
-        or http_user_agent ilike '%/win.ini%'
-        or http_user_agent ilike '%c:\\windows%'
-        -- XSS patterns
-        or http_user_agent ilike '%<script%'
-        or http_user_agent ilike '%alert(%'
-        or http_user_agent ilike '%onerror=%'
-        or http_user_agent ilike '%onload=%'
-        -- OS Command injection
-        or http_user_agent ilike '%;%'
-        or http_user_agent ilike '%&&%'
-        or http_user_agent ilike '%||%'
-        or http_user_agent ilike '%`%'
-        or http_user_agent ilike '%$(%)%'
       )
     order by
       tp_timestamp desc;
