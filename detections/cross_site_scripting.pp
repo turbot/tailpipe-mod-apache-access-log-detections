@@ -14,7 +14,6 @@ benchmark "cross_site_scripting_detections" {
     detection.cross_site_scripting_common_patterns,
     detection.cross_site_scripting_dom_based,
     detection.cross_site_scripting_encoding,
-    detection.cross_site_scripting_event_handlers,
     detection.cross_site_scripting_html_injection,
     detection.cross_site_scripting_javascript_methods,
     detection.cross_site_scripting_javascript_uri,
@@ -51,11 +50,8 @@ query "cross_site_scripting_common_patterns" {
       (
         request_uri is not null
         and (
-          -- Script tag patterns
-          request_uri ilike '%<script%'
-          or request_uri ilike '%</script>%'
           -- Common XSS patterns
-          or request_uri ilike '%alert(%'
+          request_uri ilike '%alert(%'
           or request_uri ilike '%prompt(%'
           or request_uri ilike '%confirm(%'
           or request_uri ilike '%eval(%'
@@ -71,11 +67,8 @@ query "cross_site_scripting_common_patterns" {
       (
         http_user_agent is not null
         and (
-          -- Script tag patterns
-          http_user_agent ilike '%<script%'
-          or http_user_agent ilike '%</script>%'
           -- Common XSS patterns
-          or http_user_agent ilike '%alert(%'
+          http_user_agent ilike '%alert(%'
           or http_user_agent ilike '%prompt(%'
           or http_user_agent ilike '%confirm(%'
           or http_user_agent ilike '%eval(%'
@@ -174,8 +167,13 @@ query "cross_site_scripting_attribute_injection" {
           -- Event handlers
           request_uri ilike '%onload=%'
           or request_uri ilike '%onerror=%'
-          or request_uri ilike '%onclick=%'
           or request_uri ilike '%onmouseover=%'
+          or request_uri ilike '%onfocus=%'
+          or request_uri ilike '%onmouseout=%'
+          -- Less common event handlers
+          or request_uri ilike '%onreadystatechange=%'
+          or request_uri ilike '%onbeforeonload=%'
+          or request_uri ilike '%onanimationstart=%'
           -- Dangerous attributes
           or request_uri ilike '%formaction=%'
           or request_uri ilike '%xlink:href=%'
@@ -190,8 +188,13 @@ query "cross_site_scripting_attribute_injection" {
           -- Event handlers
           http_user_agent ilike '%onload=%'
           or http_user_agent ilike '%onerror=%'
-          or http_user_agent ilike '%onclick=%'
           or http_user_agent ilike '%onmouseover=%'
+          or http_user_agent ilike '%onfocus=%'
+          or http_user_agent ilike '%onmouseout=%'
+          -- Less common event handlers
+          or http_user_agent ilike '%onreadystatechange=%'
+          or http_user_agent ilike '%onbeforeonload=%'
+          or http_user_agent ilike '%onanimationstart=%'
           -- Dangerous attributes
           or http_user_agent ilike '%formaction=%'
           or http_user_agent ilike '%xlink:href=%'
@@ -256,64 +259,6 @@ query "cross_site_scripting_javascript_uri" {
   EOQ
 }
 
-detection "cross_site_scripting_event_handlers" {
-  title           = "Cross-Site Scripting Event Handlers"
-  description     = "Detect Cross-Site Scripting attacks using HTML event handlers like onload, onerror, and onclick in requests and User-Agent headers."
-  documentation   = file("./detections/docs/cross_site_scripting_event_handlers.md")
-  severity        = "high"
-  display_columns = local.detection_display_columns
-
-  query = query.cross_site_scripting_event_handlers
-
-  tags = merge(local.cross_site_scripting_common_tags, {
-    mitre_attack_ids = "TA0002:T1059.007",
-    owasp_top_10     = "A03:2021-Injection"
-  })
-}
-
-query "cross_site_scripting_event_handlers" {
-  sql = <<-EOQ
-    select
-      ${local.detection_sql_columns}
-    from
-      apache_access_log
-    where
-      (
-        request_uri is not null
-        and (
-          -- Common event handlers
-          request_uri ilike '%onload=%'
-          or request_uri ilike '%onerror=%'
-          or request_uri ilike '%onmouseover=%'
-          or request_uri ilike '%onfocus=%'
-          or request_uri ilike '%onmouseout=%'
-          -- Less common event handlers
-          or request_uri ilike '%onreadystatechange=%'
-          or request_uri ilike '%onbeforeonload=%'
-          or request_uri ilike '%onanimationstart=%'
-        )
-      )
-      OR
-      (
-        http_user_agent is not null
-        and (
-          -- Common event handlers
-          http_user_agent ilike '%onload=%'
-          or http_user_agent ilike '%onerror=%'
-          or http_user_agent ilike '%onmouseover=%'
-          or http_user_agent ilike '%onfocus=%'
-          or http_user_agent ilike '%onmouseout=%'
-          -- Less common event handlers
-          or http_user_agent ilike '%onreadystatechange=%'
-          or http_user_agent ilike '%onbeforeonload=%'
-          or http_user_agent ilike '%onanimationstart=%'
-        )
-      )
-    order by
-      tp_timestamp desc;
-  EOQ
-}
-
 detection "cross_site_scripting_html_injection" {
   title           = "Cross-Site Scripting HTML Injection"
   description     = "Detect Cross-Site Scripting attacks using HTML tag injection that may execute JavaScript in requests and User-Agent headers."
@@ -340,29 +285,48 @@ query "cross_site_scripting_html_injection" {
         request_uri is not null
         and (
           -- Common HTML tags that can be used for XSS
-          request_uri ilike '%<iframe%'
-          or request_uri ilike '%<img%'
-          or request_uri ilike '%<svg%'
-          or request_uri ilike '%<object%'
-          or request_uri ilike '%<embed%'
-          -- HTML5 tags that can be used for XSS
-          or request_uri ilike '%<video%'
-          or request_uri ilike '%<audio%'
+          request_uri ilike '%<iframe%src=%'
+          or request_uri ilike '%<img%src=%' and (
+              request_uri ilike '%onerror=%' 
+              or request_uri ilike '%onload=%'
+          )
+          or request_uri ilike '%<svg%on%=' -- SVG with event handlers
+          or request_uri ilike '%<svg><script%' -- SVG containing script
+          or request_uri ilike '%<object%data=%' and request_uri not ilike '%application/pdf%'
+          or request_uri ilike '%<embed%src=%' and request_uri not ilike '%application/pdf%'
+          or request_uri ilike '%<video%src=%' and (
+              request_uri ilike '%onerror=%' 
+              or request_uri ilike '%onload=%'
+          )
+          or request_uri ilike '%<audio%src=%' and (
+              request_uri ilike '%onerror=%' 
+              or request_uri ilike '%onload=%'
+          )
         )
       )
-      OR
+      or
       (
         http_user_agent is not null
         and (
-          -- Common HTML tags that can be used for XSS
-          http_user_agent ilike '%<iframe%'
-          or http_user_agent ilike '%<img%'
-          or http_user_agent ilike '%<svg%'
-          or http_user_agent ilike '%<object%'
-          or http_user_agent ilike '%<embed%'
-          -- HTML5 tags that can be used for XSS
-          or http_user_agent ilike '%<video%'
-          or http_user_agent ilike '%<audio%'
+          -- HTML tags with dangerous attributes (reduces false positives)
+          http_user_agent ilike '%<iframe%src=%' 
+          or http_user_agent ilike '%<iframe%srcdoc=%'
+          or http_user_agent ilike '%<img%src=%' and (
+              http_user_agent ilike '%onerror=%' 
+              or http_user_agent ilike '%onload=%'
+          )
+          or http_user_agent ilike '%<svg%on%=' -- SVG with event handlers
+          or http_user_agent ilike '%<svg><script%' -- SVG containing script
+          or http_user_agent ilike '%<object%data=%' and http_user_agent not ilike '%application/pdf%'
+          or http_user_agent ilike '%<embed%src=%' and http_user_agent not ilike '%application/pdf%'
+          or http_user_agent ilike '%<video%src=%' and (
+              http_user_agent ilike '%onerror=%' 
+              or http_user_agent ilike '%onload=%'
+          )
+          or http_user_agent ilike '%<audio%src=%' and (
+              http_user_agent ilike '%onerror=%' 
+              or http_user_agent ilike '%onload=%'
+          )
         )
       )
     order by
@@ -450,8 +414,10 @@ query "cross_site_scripting_encoding" {
         request_uri is not null
         and (
           -- HTML entity encoding
-          request_uri ilike '%&#x%'
-          or request_uri ilike '%&#%'
+          request_uri ilike '%&#x3C;script%' -- Hex entity encoded <script
+          or request_uri ilike '%&#60;script%' -- Decimal entity encoded <script
+          or request_uri ilike '%&#x3c;%&#x2f;script&#x3e;%' -- Hex encoded </script>
+          or request_uri ilike '%&#x3c;img%&#x6f;nerror%' -- Hex encoded <img and onerror
           -- Base64 encoding
           or request_uri ilike '%data:text/html;base64,%'
           -- URL encoding
@@ -466,8 +432,10 @@ query "cross_site_scripting_encoding" {
         http_user_agent is not null
         and (
           -- HTML entity encoding
-          http_user_agent ilike '%&#x%'
-          or http_user_agent ilike '%&#%'
+          http_user_agent ilike '%&#x3C;script%' -- Hex entity encoded <script
+          or http_user_agent ilike '%&#60;script%' -- Decimal entity encoded <script
+          or http_user_agent ilike '%&#x3c;%&#x2f;script&#x3e;%' -- Hex encoded </script>
+          or http_user_agent ilike '%&#x3c;img%&#x6f;nerror%' -- Hex encoded <img and onerror
           -- Base64 encoding
           or http_user_agent ilike '%data:text/html;base64,%'
           -- URL encoding
@@ -565,26 +533,24 @@ query "cross_site_scripting_angular_template" {
       (
         request_uri is not null
         and (
-          -- AngularJS syntax
-          request_uri ilike '%\{\{%'
-          or request_uri ilike '%\}\}%'
           -- Common AngularJS injection patterns
-          or request_uri ilike '%constructor.constructor%'
+          request_uri ilike '%constructor.constructor%'
           or request_uri ilike '%$eval%'
           or request_uri ilike '%ng-init%'
+          or request_uri ilike '%ng-bind%'
+          or request_uri ilike '%ng-include%'
         )
       )
       OR
       (
         http_user_agent is not null
         and (
-          -- AngularJS syntax
-          http_user_agent ilike '%\{\{%'
-          or http_user_agent ilike '%\}\}%'
           -- Common AngularJS injection patterns
-          or http_user_agent ilike '%constructor.constructor%'
+          http_user_agent ilike '%constructor.constructor%'
           or http_user_agent ilike '%$eval%'
           or http_user_agent ilike '%ng-init%'
+          or http_user_agent ilike '%ng-bind%'
+          or http_user_agent ilike '%ng-include%'
         )
       )
     order by

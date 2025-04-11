@@ -28,7 +28,6 @@ benchmark "mitre_attack_v161_ta0002_t1059_007" {
     detection.cross_site_scripting_common_patterns,
     detection.cross_site_scripting_dom_based,
     detection.cross_site_scripting_encoding,
-    detection.cross_site_scripting_event_handlers,
     detection.cross_site_scripting_html_injection,
     detection.cross_site_scripting_javascript_methods,
     detection.cross_site_scripting_javascript_uri,

@@ -23,7 +23,6 @@ benchmark "owasp_top_10_2021_a03" {
     detection.cross_site_scripting_common_patterns,
     detection.cross_site_scripting_dom_based,
     detection.cross_site_scripting_encoding,
-    detection.cross_site_scripting_event_handlers,
     detection.cross_site_scripting_html_injection,
     detection.cross_site_scripting_javascript_methods,
     detection.cross_site_scripting_javascript_uri,
