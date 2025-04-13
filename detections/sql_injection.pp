@@ -56,19 +56,6 @@ query "sql_injection_common_patterns" {
         or request_uri ilike '%create%table%'
         or request_uri ilike '%alter%table%'
         or request_uri ilike '%exec%xp_%'
-        or request_uri ilike '%information_schema%'
-        -- Common SQL injection patterns
-        or request_uri ilike '%or%1=1%'
-        or request_uri ilike '%or%1%=%1%'
-        or request_uri ilike '%or%true%'
-        or request_uri ilike '%/*%*/%'
-        or request_uri ilike '%--+%'
-        or request_uri ilike '%-- %'
-        or request_uri ilike '%;--%'
-        -- URL encoded variants
-        or request_uri ilike '%\x27%'
-        or request_uri ilike '%\x22%'
-        or request_uri ilike '%\x3D\x3D%'
       )
     order by
       tp_timestamp desc;
@@ -110,11 +97,6 @@ query "sql_injection_union_based" {
         or request_uri ilike '%union%09select%'
         or request_uri ilike '%union%0Aselect%'
         or request_uri ilike '%union%0Dselect%'
-        -- Evasion techniques specific to UNION
-        or request_uri ilike '%uni%on%sel%ect%'
-        or request_uri ilike '%uni*/*/on/**/sel/**/ect%'
-        or request_uri ilike '%un?on+sel?ct%'
-        or request_uri ilike '%u%n%i%o%n%s%e%l%e%c%t%'
       )
     order by
       tp_timestamp desc;
@@ -165,6 +147,7 @@ query "sql_injection_blind_based" {
         or request_uri ilike '%and%28select%'
         or request_uri ilike '%and%28case%'
       )
+      and request_uri not ilike '%rand%'
     order by
       tp_timestamp desc;
   EOQ
@@ -194,23 +177,99 @@ query "sql_injection_error_based" {
     where
       request_uri is not null
       and (
-        -- Error-based extraction patterns
-        request_uri ilike '%convert%(%'
-        or request_uri ilike '%cast%(%'
-        or request_uri ilike '%extractvalue%(%'
-        or request_uri ilike '%updatexml%(%'
-        or request_uri ilike '%floor%(%'
-        or request_uri ilike '%exp%(%'
-        or request_uri ilike '%concat%(%'
-        or request_uri ilike '%concat_ws%(%'
-        or request_uri ilike '%group_concat%(%'
+        -- Error-based extraction patterns with context
+        (
+          request_uri ilike '%convert%(%'
+          or request_uri ilike '%cast%(%'
+          or request_uri ilike '%extractvalue%(%'
+          or request_uri ilike '%updatexml%(%'
+          or request_uri ilike '%floor%(%'
+        )
+        -- SQL exp() function with strict context
+        or (
+          (
+            request_uri ilike '% exp%(%'
+            or request_uri ilike '%,exp%(%'
+            or request_uri ilike '%(exp%(%'
+          )
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+            or request_uri ilike '%and%'
+            or request_uri ilike '%or%'
+          )
+          and request_uri not ilike '%expression%'
+          and request_uri not ilike '%expre%ssion%'
+        )
+        -- Concatenation functions with context
+        or (
+          (
+            request_uri ilike '%concat%(%'
+            or request_uri ilike '%concat_ws%(%'
+            or request_uri ilike '%group_concat%(%'
+          )
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+          )
+        )
         -- Known error-based functions with database fingerprinting
-        or request_uri ilike '%db_name%(%'
-        or request_uri ilike '%@@version%'
-        or request_uri ilike '%version%(%'
-        or request_uri ilike '%pg_sleep%(%'
-        or request_uri ilike '%sys.%'
-        or request_uri ilike '%sys.xp_%'
+        or (
+          request_uri ilike '%db_name%(%'
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+          )
+        )
+        or (
+          request_uri ilike '%@@version%'
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+          )
+        )
+        or (
+          request_uri ilike '%version%(%'
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+          )
+        )
+        -- Time-based functions with context
+        or (
+          (
+            request_uri ilike '%pg_sleep%(%'
+            or request_uri ilike '%sleep%(%'
+            or request_uri ilike '%benchmark%(%'
+          )
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+          )
+        )
+        -- System functions with context
+        or (
+          request_uri ilike '%sys.%'
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+          )
+        )
+        or (
+          request_uri ilike '%sys.xp_%'
+          and (
+            request_uri ilike '%select%'
+            or request_uri ilike '%from%'
+            or request_uri ilike '%where%'
+          )
+        )
         -- Common error triggers
         or request_uri ilike '%having%1=1%'
         or request_uri ilike '%order%by%'
@@ -298,20 +357,39 @@ query "sql_injection_user_agent_based" {
         or http_user_agent ilike '%update%set%'
         or http_user_agent ilike '%delete%from%'
         or http_user_agent ilike '%drop%table%'
-        -- Common SQL comment markers and logic patterns
-        or http_user_agent ilike '%--+%'
-        or http_user_agent ilike '%-- %'
-        or http_user_agent ilike '%;--%'
-        or http_user_agent ilike '%/*%*/%'
-        or http_user_agent ilike '%or%1=1%'
-        or http_user_agent ilike '%or%1%=%1%'
-        or http_user_agent ilike '%or%true%'
-        -- Database-specific User-Agent attacks
-        or http_user_agent ilike '%@@version%'
-        or http_user_agent ilike '%information_schema%'
-        or http_user_agent ilike '%sql_injectionte_master%'
-        or http_user_agent ilike '%pg_tables%'
-        or http_user_agent ilike '%sys.%'
+      -- SQL comment markers with context
+        or (
+          (
+            http_user_agent ilike '%--+%'
+            or http_user_agent ilike '%-- %'
+            or http_user_agent ilike '%;--%'
+            or http_user_agent ilike '%/*%*/%'
+          )
+          and (
+            http_user_agent ilike '%select%'
+            or http_user_agent ilike '%union%'
+            or http_user_agent ilike '%insert%'
+            or http_user_agent ilike '%update%'
+            or http_user_agent ilike '%delete%'
+          )
+        )
+        -- Database-specific patterns with context
+        or (
+          (
+            http_user_agent ilike '%@@version%'
+            or http_user_agent ilike '%information_schema%'
+            or http_user_agent ilike '%sql_injectionte_master%'
+            or http_user_agent ilike '%pg_tables%'
+            or http_user_agent ilike '%sys.%'
+          )
+          and (
+            http_user_agent ilike '%select%'
+            or http_user_agent ilike '%union%'
+            or http_user_agent ilike '%insert%'
+            or http_user_agent ilike '%update%'
+            or http_user_agent ilike '%delete%'
+          )
+        )
         -- Time-based techniques
         or http_user_agent ilike '%sleep(%'
         or http_user_agent ilike '%benchmark(%'
