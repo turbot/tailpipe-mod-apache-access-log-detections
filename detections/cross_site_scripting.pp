@@ -164,12 +164,17 @@ query "cross_site_scripting_attribute_injection" {
       (
         request_uri is not null
         and (
-          -- Event handlers
-          request_uri ilike '%onload=%'
-          or request_uri ilike '%onerror=%'
+          -- Attribute injection patterns
+          request_uri ilike '%onerror=%'
+          or request_uri ilike '%onload=%'
           or request_uri ilike '%onmouseover=%'
-          or request_uri ilike '%onfocus=%'
           or request_uri ilike '%onmouseout=%'
+          or request_uri ilike '%onclick=%'
+          or request_uri ilike '%onfocus=%'
+          or request_uri ilike '%onblur=%'
+          or request_uri ilike '%onchange=%'
+          or request_uri ilike '%onsubmit=%'
+          or request_uri ilike '%onkeypress=%'
           -- Less common event handlers
           or request_uri ilike '%onreadystatechange=%'
           or request_uri ilike '%onbeforeonload=%'
@@ -185,12 +190,17 @@ query "cross_site_scripting_attribute_injection" {
       (
         http_user_agent is not null
         and (
-          -- Event handlers
-          http_user_agent ilike '%onload=%'
-          or http_user_agent ilike '%onerror=%'
+          -- Attribute injection patterns
+          http_user_agent ilike '%onerror=%'
+          or http_user_agent ilike '%onload=%'
           or http_user_agent ilike '%onmouseover=%'
-          or http_user_agent ilike '%onfocus=%'
           or http_user_agent ilike '%onmouseout=%'
+          or http_user_agent ilike '%onclick=%'
+          or http_user_agent ilike '%onfocus=%'
+          or http_user_agent ilike '%onblur=%'
+          or http_user_agent ilike '%onchange=%'
+          or http_user_agent ilike '%onsubmit=%'
+          or http_user_agent ilike '%onkeypress=%'
           -- Less common event handlers
           or http_user_agent ilike '%onreadystatechange=%'
           or http_user_agent ilike '%onbeforeonload=%'
@@ -236,12 +246,11 @@ query "cross_site_scripting_javascript_uri" {
           request_uri ilike '%javascript:%'
           or request_uri ilike '%vbscript:%'
           -- Obfuscated javascript: URIs
-          or request_uri ilike '%j%a%v%a%s%c%r%i%p%t%'
           or request_uri ilike '%jav&#x0A;ascript:%'
           or request_uri ilike '%javascript:url(%'
         )
       )
-      OR
+      or
       (
         http_user_agent is not null
         and (
@@ -249,7 +258,6 @@ query "cross_site_scripting_javascript_uri" {
           http_user_agent ilike '%javascript:%'
           or http_user_agent ilike '%vbscript:%'
           -- Obfuscated javascript: URIs
-          or http_user_agent ilike '%j%a%v%a%s%c%r%i%p%t%'
           or http_user_agent ilike '%jav&#x0A;ascript:%'
           or http_user_agent ilike '%javascript:url(%'
         )
@@ -363,13 +371,13 @@ query "cross_site_scripting_javascript_methods" {
           request_uri ilike '%eval(%'
           or request_uri ilike '%setTimeout(%'
           or request_uri ilike '%setInterval(%'
-          or request_uri ilike '%new Function(%'
+          or request_uri ilike '%Function(%'
           or request_uri ilike '%fetch(%'
           or request_uri ilike '%document.write(%'
           or request_uri ilike '%document.cookie%'
         )
       )
-      OR
+      or
       (
         http_user_agent is not null
         and (
@@ -377,7 +385,7 @@ query "cross_site_scripting_javascript_methods" {
           http_user_agent ilike '%eval(%'
           or http_user_agent ilike '%setTimeout(%'
           or http_user_agent ilike '%setInterval(%'
-          or http_user_agent ilike '%new Function(%'
+          or http_user_agent ilike '%Function(%'
           or http_user_agent ilike '%fetch(%'
           or http_user_agent ilike '%document.write(%'
           or http_user_agent ilike '%document.cookie%'
@@ -423,11 +431,9 @@ query "cross_site_scripting_encoding" {
           -- URL encoding
           or request_uri ilike '%\\u00%'
           or request_uri ilike '%\\x%'
-          -- UTF-7 encoding (IE specific)
-          or request_uri ilike '%+ADw-%'
         )
       )
-      OR
+      or
       (
         http_user_agent is not null
         and (
@@ -441,8 +447,6 @@ query "cross_site_scripting_encoding" {
           -- URL encoding
           or http_user_agent ilike '%\\u00%'
           or http_user_agent ilike '%\\x%'
-          -- UTF-7 encoding (IE specific)
-          or http_user_agent ilike '%+ADw-%'
         )
       )
     order by
@@ -485,9 +489,14 @@ query "cross_site_scripting_dom_based" {
           or request_uri ilike '%window.location%'
           or request_uri ilike '%document.URL%'
           or request_uri ilike '%document.documentURI%'
+          or request_uri ilike '%document.referrer%'
+          or request_uri ilike '%window.name%'
+          or request_uri ilike '%location.hash%'
+          or request_uri ilike '%location.search%'
+          or request_uri ilike '%location.href%'
         )
       )
-      OR
+      or
       (
         http_user_agent is not null
         and (
@@ -501,6 +510,11 @@ query "cross_site_scripting_dom_based" {
           or http_user_agent ilike '%window.location%'
           or http_user_agent ilike '%document.URL%'
           or http_user_agent ilike '%document.documentURI%'
+          or http_user_agent ilike '%document.referrer%'
+          or http_user_agent ilike '%window.name%'
+          or http_user_agent ilike '%location.hash%'
+          or http_user_agent ilike '%location.search%'
+          or http_user_agent ilike '%location.href%'
         )
       )
     order by
