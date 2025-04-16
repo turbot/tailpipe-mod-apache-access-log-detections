@@ -1,10 +1,14 @@
 # Apache Access Log Detections Mod for Powerpipe
 
-View dashboards, run detections and scan for anomalies across your Apache access logs.
+[Tailpipe](https://tailpipe.io) is an open-source CLI tool that allows you to collect logs and query them with SQL.
 
-<!-- 
-TODO: Insert images
--->
+The [Apache Access Log Detections Mod](https://hub.powerpipe.io/mods/turbot/tailpipe-mod-apache-access-log-detections) contains pre-built dashboards and detections, which can be used to monitor and analyze activity across your Apache servers.
+
+Run detection benchmarks:
+![image](docs/images/apache_access_log_owasp_dashboard.png)
+
+View insights in dashboards:
+![image](docs/images/apache_access_log_activity_dashboard.png)
 
 ## Documentation
 
@@ -102,13 +106,12 @@ List available benchmarks:
 powerpipe benchmark list
 ```
 
-<!-- TODO: add a benchmark name and uncomment
 Run a benchmark:
 
 ```sh
-powerpipe benchmark run apache_access_log_detections.benchmark.
+powerpipe benchmark run apache_access_log_detections.benchmark.owasp_top_10
 ```
--->
+
 Different output formats are also available, for more information please see
 [Output Formats](https://powerpipe.io/docs/reference/cli/benchmark#output-formats).
 

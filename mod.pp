@@ -11,6 +11,6 @@ mod "apache_access_log_detections" {
   opengraph {
     title       = "Tailpipe Mod for Apache Access Log Detections"
     description = "Search your Apache access logs for high risk actions using Tailpipe."
-    #image       = "/images/mods/turbot/apache-social-graphic.png"
+    image       = "/images/mods/turbot/apache-access-log-detections-social-graphic.png"
   }
 }
