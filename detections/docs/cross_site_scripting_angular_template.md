@@ -11,7 +11,7 @@ Advanced AngularJS injection techniques often use methods like `$eval` or direct
 By examining both request URIs and User-Agent headers, this detection can identify attackers who attempt to evade security controls by hiding their template injection payloads in HTTP headers rather than request parameters. This comprehensive approach helps security teams identify sophisticated AngularJS template injection attempts targeting their web applications.
 
 **References**:
-- [OWASP: AngularJS Client Side Template Injection](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/07-Testing_for_Client-side_Template_Injection)
+- [OWASP Cross-Site Scripting Prevention](https://owasp.org/www-community/attacks/xss/)
 - [CWE-79: Improper Neutralization of Input During Web Page Generation](https://cwe.mitre.org/data/definitions/79.html)
 - [OWASP Top 10 2021: A03 Injection](https://owasp.org/Top10/A03_2021-Injection/)
 - [MITRE ATT&CK: T1059.007 Command and Scripting Interpreter: JavaScript](https://attack.mitre.org/techniques/T1059/007/)

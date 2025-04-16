@@ -7,7 +7,8 @@ This detection identifies SQL injection patterns in the User-Agent header, inclu
 Web applications that store User-Agent strings directly in databases without proper sanitization, log management systems that process User-Agent data through SQL queries, and analytics platforms that consume User-Agent data for statistics are particularly at risk from this attack vector.
 
 **References**:
-- [OWASP SQL Injection Advanced Guide](https://owasp.org/www-community/attacks/SQL_Injection)
-- [HTTP Header Injection](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/17-Testing_for_HTTP_Incoming_Requests)
+- [OWASP SQL Injection Prevention](https://owasp.org/www-community/attacks/SQL_Injection)
+- [OWASP HTTP Security Headers Guide](https://owasp.org/www-community/Security_Headers)
 - [CWE-89: Improper Neutralization of Special Elements used in an SQL Command](https://cwe.mitre.org/data/definitions/89.html)
-- [MITRE ATT&CK: Exploit Public-Facing Application (T1190)](https://attack.mitre.org/techniques/T1190/) 
+- [MITRE ATT&CK: Exploit Public-Facing Application (T1190)](https://attack.mitre.org/techniques/T1190/)
+- [OWASP HTTP Security Testing Guide](https://owasp.org/www-community/attacks/HTTP_Response_Splitting) 

@@ -7,7 +7,7 @@ Attackers target operating system files including Unix/Linux system files (such 
 Successful exploitation can lead to disclosure of sensitive system information, including usernames, system configuration, and potentially even password hashes. Attackers use this information for reconnaissance and to plan further attacks. When this detection triggers, security teams should verify if the access attempt was successful (checking for 200 OK responses rather than 404 errors), analyze which system files were targeted, implement proper web server configuration to block access to system directories, configure web application firewalls to block common LFI patterns, validate and sanitize all file path inputs in the application, and review the application for file inclusion vulnerabilities. Some legitimate scenarios that may trigger this detection include system administration tools operating through web interfaces, monitoring and logging applications that need access to system files, and authorized system information display pages.
 
 **References**:
-- [OWASP: Testing for Local File Inclusion](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/07-Input_Validation_Testing/11.1-Testing_for_Local_File_Inclusion)
+- [OWASP Path Traversal Prevention](https://owasp.org/www-community/attacks/Path_Traversal) 
 - [CWE-22: Improper Limitation of a Pathname to a Restricted Directory](https://cwe.mitre.org/data/definitions/22.html)
-- [Path Traversal Prevention](https://cheatsheetseries.owasp.org/cheatsheets/File_System_Security_Cheat_Sheet.html)
-- [MITRE ATT&CK: File and Directory Discovery (T1083)](https://attack.mitre.org/techniques/T1083/) 
+- [OWASP File Security Guide](https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload)
+- [MITRE ATT&CK: File and Directory Discovery (T1083)](https://attack.mitre.org/techniques/T1083/)

@@ -12,6 +12,6 @@ Error-based SQL injection can be particularly effective against applications tha
 
 **References**:
 - [OWASP SQL Injection Guide](https://owasp.org/www-community/attacks/SQL_Injection)
-- [Error-Based SQL Injection Techniques](https://www.exploit-db.com/docs/english/44348-error-based-sql-injection-in-order-by-clause.pdf)
+- [Error-Based SQL Injection Techniques](https://www.exploit-db.com/papers/17934)
 - [CWE-89: Improper Neutralization of Special Elements used in an SQL Command](https://cwe.mitre.org/data/definitions/89.html)
 - [MITRE ATT&CK: Exploit Public-Facing Application (T1190)](https://attack.mitre.org/techniques/T1190/)
