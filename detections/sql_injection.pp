@@ -60,7 +60,7 @@ query "sql_injection_common_patterns" {
         -- Common SQL injection patterns
         or request_uri ilike '%or%1=1%'
         or request_uri ilike '%or%true%'
-        or request_uri ilike '%/*%*/%'
+        or request_uri ilike '%/*_%*/%'
         or request_uri ilike '%--+%'
         or request_uri ilike '%-- %'
         or request_uri ilike '%;--%'
@@ -68,7 +68,6 @@ query "sql_injection_common_patterns" {
         or request_uri ilike '%\x27%'
         or request_uri ilike '%\x22%'
         or request_uri ilike '%\x3D\x3D%'
-
       )
     order by
       tp_timestamp desc;
@@ -299,10 +298,10 @@ query "sql_injection_user_agent_based" {
         or http_user_agent ilike '%delete%from%'
         or http_user_agent ilike '%drop%table%'
         -- Common SQL comment markers and logic patterns
+        or http_user_agent ilike '%/*_%*/%'
         or http_user_agent ilike '%--+%'
         or http_user_agent ilike '%-- %'
         or http_user_agent ilike '%;--%'
-        or http_user_agent ilike '%/*%*/%'
         or http_user_agent ilike '%or%1=1%'
         or http_user_agent ilike '%or%true%'
         -- Database-specific User-Agent attacks
