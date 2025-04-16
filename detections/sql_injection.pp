@@ -137,7 +137,6 @@ query "sql_injection_blind_based" {
         -- Blind condition checks
         request_uri ilike '%and%1=1%'
         or request_uri ilike '%and%1=2%'
-        or request_uri ilike '%and%if%'
         or request_uri ilike '%case%when%'
         or request_uri ilike '%substr%(%'
         or request_uri ilike '%substring%(%'
@@ -150,7 +149,6 @@ query "sql_injection_blind_based" {
         or request_uri ilike '%and+ascii(substring%'
         or request_uri ilike '%and+length(%)%'
         -- URL encoded variants common in blind injections
-        or request_uri ilike '%and%20%'
         or request_uri ilike '%and%28select%'
         or request_uri ilike '%and%28case%'
       )
