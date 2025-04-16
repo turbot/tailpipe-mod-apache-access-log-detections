@@ -4,7 +4,8 @@
 
 The [Apache Access Log Detections Mod](https://hub.powerpipe.io/mods/turbot/tailpipe-mod-apache-access-log-detections) contains pre-built dashboards and detections, which can be used to monitor and analyze activity across your Apache servers.
 
-<img src="https://raw.githubusercontent.com/turbot/tailpipe-mod-apache-access-log-detections/main/docs/images/apache_access_log_owasp_top_10_dashboard.png" width="50%" type="thumbnail"/>
+<img src="https://raw.githubusercontent.com/turbot/tailpipe-mod-apache-access-log-detections/main/docs/images/apache_access_log_owasp_dashboard.png" width="50%" type="thumbnail"/>
+<img src="https://raw.githubusercontent.com/turbot/tailpipe-mod-apache-access-log-detections/main/docs/images/apache_access_log_mitre_dashboard.png" width="50%" type="thumbnail"/>
 <img src="https://raw.githubusercontent.com/turbot/tailpipe-mod-apache-access-log-detections/main/docs/images/apache_access_log_activity_dashboard.png" width="50%" type="thumbnail"/>
 
 ## Documentation
