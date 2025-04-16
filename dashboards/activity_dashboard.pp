@@ -63,7 +63,7 @@ dashboard "activity_dashboard" {
     }
 
     chart {
-      title = "Requests by User Agent"
+      title = "Top 10 User Agents (Requests)"
       query = query.activity_dashboard_requests_by_user_agent
       width = 6
       type  = "pie"
@@ -318,7 +318,7 @@ query "activity_dashboard_requests_by_errors" {
 }
 
 query "activity_dashboard_requests_by_user_agent" {
-  title       = "Requests by User Agent"
+  title       = "Top 10 User Agents (Requests)"
   description = "Distribution of user agents in requests."
 
   sql = <<-EOQ
@@ -333,6 +333,7 @@ query "activity_dashboard_requests_by_user_agent" {
       http_user_agent
     order by
       count(*) desc,
-      http_user_agent;
+      http_user_agent
+    limit 10;
   EOQ
 }
